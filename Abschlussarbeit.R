@@ -1,5 +1,5 @@
-daten=read.csv("DAX.csv") #Quelle:finance.yahoo.com
-daten_omit=daten[!daten$Open=="null",] #Fehlende Werte weg
+daten=read.csv("DAX.csv") #Quelle: finance.yahoo.com
+daten_omit=daten[!daten$Open=="null",] #Fehlende Werte wegnehmen
 dim(daten_omit) #noch 6827 Beobachtungen
 dax=daten_omit[,1:2]#Nur Datum und Schlusskurs bleiben
 dax$Close=as.numeric(as.character(dax$Close))
