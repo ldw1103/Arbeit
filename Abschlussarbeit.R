@@ -68,7 +68,9 @@ for (i in (1:(length(dax_log_xts)-249))){         #es gibt (6826-250) Vorhersage
 VaR95_bmm
 VaR95_bmm_xts=xts(VaR95_bmm,dax_log$date[250:6826])
 VaR95_bmm_xts
-plot(VaR95_bmm_xts[1:250])    #die ersten 250 Vorhersagen als Beispiel, denn 6826-250 ist zu viel
+plot(dax_log$logreturn[251:500])
+plot(dax_log_xts[251:500])
+lines(VaR95_bmm_xts[1:250],col="red")    #die ersten 250 Vorhersagen als Beispiel, denn (6826-250) ist zu viel
 
 
 # mit Theta (extremer Index) Embrechtschap7 P.289
