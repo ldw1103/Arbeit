@@ -43,9 +43,33 @@ fit_mle$results$par     #Paramter. Location=3.55 (mu), Scale=1.39 (sigma), Shape
 # return levels:
 rl_mle <- return.level(fit_mle, conf = 0.05, return.period= c(2,5,10,20,50,100))
 
-#VaR berechnen, µ«ÊÇ²»¹»
-VaR_0.95=3.5501838-1.3903295/0.1951717*(1-(-log(0.95))^(-0.1951717))
-VaR_0.95    # gleich 20-year level
+#VaR berechnen, 
+#VaR_0.95=3.5501838-1.3903295/0.1951717*(1-(-log(0.95))^(-0.1951717))
+#VaR_0.95    # gleich 20-year level
+
+#Moving Window (Groesse=250) Zum Beispiel: das erste Fenster
+ts_bm_1=dax_log_xts[1:250]
+weekmin=-apply.weekly(ts_bm_1,min)   #die groessete woechentliche Verlust
+weekmin
+plot(weekmin)
+fit_mle <- fevd(as.vector(weekmin), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+plot(fit_mle)         #passt
+fit_mle$results$par  #Parameter extrahieren 
+
+#Alle VaRs berechnen
+VaR95_bmm=numeric(0)
+weekmin=numeric(0)
+fit_mle=numeric(0)
+for (i in (1:(length(dax_log_xts)-249))){         #es gibt (6826-250) Vorhersagen
+  weekmin=-apply.weekly(dax_log_xts[i:(i+249)],min)    #die groessete woechentliche Verlust
+  fit_mle <- fevd(as.vector(weekmin), method = "MLE", type="GEV")
+  VaR95_bmm[i]=return.level(fit_mle, conf = 0.05, return.period= 5)[1]  #VaR0.95
+}
+VaR95_bmm
+VaR95_bmm_xts=xts(VaR95_bmm,dax_log$date[250:6826])
+VaR95_bmm_xts
+plot(VaR95_bmm_xts[1:250])    #die ersten 250 Vorhersagen als Beispiel, denn 6826-250 ist zu viel
+
 
 # mit Theta (extremer Index) Embrechtschap7 P.289
 
