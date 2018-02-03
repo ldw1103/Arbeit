@@ -9,6 +9,7 @@ library(rugarch)
 library(skewt)
 library(fGarch)
 library(forecast)
+
 #Daten Einlesen
 
 daten=read.csv("DAX.csv") #Quelle: finance.yahoo.com
@@ -16,7 +17,9 @@ daten_omit=daten[!daten$Open=="null",] #Fehlende Werte wegnehmen
 dim(daten_omit) #noch 6827 Beobachtungen
 dax=daten_omit[,1:2]#Nur Datum und Schlusskurs bleiben
 dax$Close=as.numeric(as.character(dax$Close))
-plot(dax)
+dax$Date=as.Date(dax$Date)         #Datentyp von Datum transformieren
+dax_xts=xts(dax$Close,dax$Date)    #xts-Format
+plot(dax_xts)
 
 n=length(dax$Close)
 logreturn <- 100*log(dax$Close[-1]/dax$Close[-n])#log Return
@@ -32,102 +35,200 @@ stats::qqnorm(dax_log$logreturn);qqline(dax_log$logreturn)  #leptokurtisch
 
 adf.test(dax_log_xts)   #ADF-Test: p=0.01, deshalb ist es stationaer.
 
-#Jaehrliche Maxima
-#jahrmax=apply.yearly(dax_log_xts,min) #die jaehliche groesste Verlust 
-#jahrmax=-jahrmax  #Vorzeichen umkeheren, damit sie positiv sind
-#jahrmax
-#plot(jahrmax)
+dax_log_xts=-dax_log_xts  # Vorzeichen umkehren, Verlust statt Rendite
+plot(dax_log_xts)
+
+#Jaehrliche Maxima als Beispiel
+jahrmax_bsp=apply.yearly(dax_log_xts,max) #die jaehliche groesste Verlust 
+jahrmax_bsp
+plot(jahrmax_bsp)
 
 # maximum-likelihood fitting of the GEV distribution
-#fit_mle <- fevd(as.vector(jahrmax), method = "MLE", type="GEV")
+fit_bsp <- fevd(as.vector(jahrmax_bsp), method = "MLE", type="GEV")
 # diagnostic plots
-#plot(fit_mle)
-#fit_mle$results$par     #Paramter. Location=3.55 (mu), Scale=1.39 (sigma), Shape=0.195 (xi) 
+plot(fit_bsp)
+fit_bsp$results$par     #Paramter. Location=3.55 (mu), Scale=1.39 (sigma), Shape=0.195 (tau) 
 #xi>0, somit ist es Frechet-Verteilung
 
 # return levels:
-#rl_mle <- return.level(fit_mle, conf = 0.05, return.period= c(2,5,10,20,50,100))
-
+rl_bsp <- return.level(fit_bsp, conf = 0.05, return.period= c(2,5,10,20,50,100))
+rl_bsp
 
 #Unterschiedliche Laenge des Blocks (Woche, Monat, Quartal, Jahr)
-yearmin=-apply.yearly(dax_log_xts,min) #die jaehliche groesste Verlust 
-yearmin
-plot(yearmin)
-fit_mle <- fevd(as.vector(yearmin), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-fit_mle <- fevd(as.vector(yearmin), method = "Lmoments", type="GEV")  #"Lmoments" um Parameter zu schaetzen
-plot(fit_mle) 
-plot(dax_log_xts,main="Return Level")
-abline(h=return.level(fit_mle, conf = 0.05, return.period= c(5,10,20))[1],col="green",lty=3)
-abline(h=return.level(fit_mle, conf = 0.05, return.period= c(5,10,20))[2],col="blue",lty=2)
-abline(h=return.level(fit_mle, conf = 0.05, return.period= c(5,10,20))[3],col="red",lty=1)
+jahrmax=apply.yearly(dax_log_xts,max) #die jaehliche groesste Verlust 
+jahrmax
+plot(jahrmax)
+fit_jahr <- fevd(as.vector(jahrmax), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+fit_jahr_lm <- fevd(as.vector(jahrmax), method = "Lmoments", type="GEV")  #"Lmoments" um Parameter zu schaetzen
+plot(fit_jahr)
+plot(fit_jahr_lm) 
+return.level(fit_jahr, conf = 0.05, return.period= c(2,5,10,20,50))
+return.level(fit_jahr_lm, conf = 0.05, return.period= c(2,5,10,20,50))
+
+plot(dax_log_xts,main="Verlust und Return Level")
+abline(h=return.level(fit_jahr, conf = 0.05, return.period= c(5,10,20))[1],col="green",lty=3)
+abline(h=return.level(fit_jahr, conf = 0.05, return.period= c(5,10,20))[2],col="blue",lty=2)
+abline(h=return.level(fit_jahr, conf = 0.05, return.period= c(5,10,20))[3],col="red",lty=1)
 legend("bottomleft",inset=0.005,title="Return Level",c("20 Jahre","10 Jahre","5 Jahre"),col=c("red","blue","green"),lty=c(1,2,3))
 
-quartermin=-apply.quarterly(dax_log_xts,min) #die quartale groesste Verlust (Empfohlen von Mcneil Calculating Quantile Risk Measures for Financial Return
+
+quartalmax=apply.quarterly(dax_log_xts,max) #die quartale groesste Verlust (Empfohlen von Mcneil Calculating Quantile Risk Measures for Financial Return
                                              #Series using Extreme Value Theory)
-quartermin
-plot(quartermin)
-fit_mle <- fevd(as.vector(quartermin), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-plot(fit_mle) 
+quartalmax
+plot(quartalmax)
+fit_quartal <- fevd(as.vector(quartalmax), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+fit_quartal_lm <- fevd(as.vector(quartalmax), method = "Lmoments", type="GEV")  #"Lmoments" um Parameter zu schaetzen
+plot(fit_quartal)
+plot(fit_quartal_lm) 
+return.level(fit_quartal, conf = 0.05, return.period= c(2,5,10,20,50))
+return.level(fit_quartal_lm, conf = 0.05, return.period= c(2,5,10,20,50))
 
-monthmin=-apply.monthly(dax_log_xts,min) #die monatliche groesste Verlust 
-monthmin
-plot(monthmin)
-fit_mle <- fevd(as.vector(monthmin), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-plot(fit_mle) 
+monatmax=apply.monthly(dax_log_xts,max) #die monatliche groesste Verlust 
+monatmax
+plot(monatmax)
+fit_monatmax <- fevd(as.vector(monatmax), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+fit_monatmax_lm <- fevd(as.vector(monatmax), method = "Lmoments", type="GEV")  #"Lmoments" um Parameter zu schaetzen
+plot(fit_monatmax_lm)
+plot(fit_monatmax) 
+return.level(fit_monatmax, conf = 0.05, return.period= c(2,5,10,20,50))
+return.level(fit_monatmax_lm, conf = 0.05, return.period= c(2,5,10,20,50))
 
-weekmin=-apply.weekly(dax_log_xts,min) #die woechentliche groesste Verlust 
-weekmin
-plot(weekmin)
-fit_mle <- fevd(as.vector(weekmin), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-plot(fit_mle) 
+
+wochemax=apply.weekly(dax_log_xts,max) #die woechentliche groesste Verlust 
+wochemax
+plot(wochemax)
+fit_woche <- fevd(as.vector(wochemax), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+plot(fit_woche) 
 
 
 # Monatlich Moving Window (Groesse=1000) Zum Beispiel: das erste Fenster
 ts_bm_1=dax_log_xts[1:1000]
-monthmin=-apply.monthly(ts_bm_1,min)   #die groessete monatliche Verlust
-monthmin
-plot(monthmin)
-fit_mle <- fevd(as.vector(monthmin), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-plot(fit_mle)         #passt
-fit_mle$results$par  #Parameter extrahieren 
+monatmax1=apply.monthly(ts_bm_1,max)   #die groessete monatliche Verlust
+monatmax1
+plot(monatmax1)
+fit_monat1 <- fevd(as.vector(monatmax1), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+plot(fit_monat1)         #passt
+fit_monat1$results$par  #Parameter extrahieren 
 
-#Alle VaRs berechnen
+# VaRs berechnen
+VaR95_bmm=numeric(0)
 VaR99_bmm=numeric(0)
-monthmin=numeric(0)
-fit_mle=numeric(0)
+VaR995_bmm=numeric(0)
+monatmax=numeric(0)
+fit=numeric(0)
 for (i in (1:5826)){         #es gibt (6826-1000) Vorhersagen
-  monthmin=-apply.monthly(dax_log_xts[i:(i+999)],min)    #die groessete monatliche Verlust
-  fit <- fevd(as.vector(monthmin), method = "Lmoment", type="GEV")
-  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 5.255)[1]  #VaR0.99 Siehe Longin2000, Mcneil1998
-}
+  monatmax=apply.monthly(dax_log_xts[i:(i+999)],max)    #die groessete monatliche Verlust
+  fit <- fevd(as.vector(monatmax), method = "Lmoments", type="GEV")
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 10.4833)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 20
+  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 5.4917)[1]  
+  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.5588)[1]
+  }
 #VaR99_bmm[2040]=return.level(fevd(as.vector(-apply.monthly(dax_log_xts[2040:(2040+999)],min)), method = "Lmoment", type="GEV"), conf = 0.05, return.period= 5.255)[1]
 #denn wenn i =2040, funktioniert MLE nicht, deshalb wird es dabei durch Lmoment ersetzt
-VaR99_bmm
+VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[1001:6826])
 VaR99_bmm_xts=xts(VaR99_bmm,dax_log$date[1001:6826])
-VaR99_bmm_xts
-plot(dax_log$logreturn)
-plot(dax_log_xts[1001:6826])   
-lines(VaR99_bmm_xts,col="red")    
-summary(VaR99_bmm_xts>dax_log_xts[1001:6826]) #  84 Ueberschreitungen
+VaR95_bmm_xts=xts(VaR95_bmm,dax_log$date[1001:6826]) 
+
+plot(dax_log_xts[1001:6826])  
+lines(VaR995_bmm_xts,col="red")   
+lines(VaR99_bmm_xts,col="blue")    
+lines(VaR95_bmm_xts,col="green")   
+sum(VaR995_bmm_xts<dax_log_xts[1001:6826]) #  60 Ueberschreitungen
+sum(VaR99_bmm_xts<dax_log_xts[1001:6826]) #  109 Ueberschreitungen
+sum(VaR95_bmm_xts<dax_log_xts[1001:6826]) #  494 Ueberschreitungen
 
 #Quartal
+VaR95_bmm=numeric(0)
 VaR99_bmm=numeric(0)
-quartalmin=numeric(0)
-fit_mle=numeric(0)
+VaR995_bmm=numeric(0)
+quartalmax=numeric(0)
+fit=numeric(0)
 for (i in (1:5826)){         #es gibt (6826-1000) Vorhersagen
-  quartalmin=-apply.quarterly(dax_log_xts[i:(i+999)],min)    #die groessete quartalliche Verlust
-  fit <- fevd(as.vector(quartalmin), method = "Lmoment", type="GEV")
-  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.085)[1]  #VaR0.99 Siehe Longin2000, Mcneil1998
+  quartalmax=apply.quarterly(dax_log_xts[i:(i+999)],max)    #die groessete quartalliche Verlust
+  fit <- fevd(as.vector(quartalmax), method = "Lmoments", type="GEV")
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 3.8500)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 60
+  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.2083)[1]  
+  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.0483)[1] 
 }
-VaR99_bmm
+
+VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[1001:6826])
 VaR99_bmm_xts=xts(VaR99_bmm,dax_log$date[1001:6826])
-VaR99_bmm_xts
-plot(dax_log$logreturn)
+VaR95_bmm_xts=xts(VaR95_bmm,dax_log$date[1001:6826]) ##276 Problem
+
 plot(dax_log_xts[1001:6826])  
-lines(VaR99_bmm_xts,col="red")    
-summary(VaR99_bmm_xts>dax_log_xts[1001:6826]) #  135 Ueberschreitungen
+lines(VaR995_bmm_xts,col="red")   
+lines(VaR99_bmm_xts,col="blue")    
+lines(VaR95_bmm_xts,col="green")   
+sum(VaR995_bmm_xts<dax_log_xts[1001:6826]) #  86 Ueberschreitungen
+sum(VaR99_bmm_xts<dax_log_xts[1001:6826]) #  164 Ueberschreitungen
+sum(VaR95_bmm_xts<dax_log_xts[1001:6826]) #  666 Ueberschreitungen
+
+###Problem mit Daten und apply.monthly!!!!!! Die Laenge des Intervalls ist unterschiedlich!! (Das erste und das letzte!)
+## Deshalb werden die Daten aequidistant unterteilt
+
+period.max(dax_log_xts,seq(from=1,to=6826,by=20))  #Monatlich z.B.
 
 
+# Moving Window (Groesse=1000) Zum Beispiel: das erste Fenster
+ts_bm_1=dax_log_xts[1:1000]
+monatmax1=period.max(ts_bm_1,seq(from=20,to=1000,by=20))   #die groessete monatliche Verlust
+monatmax1
+plot(monatmax1)
+fit_monat1 <- fevd(as.vector(monatmax1), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+plot(fit_monat1)         #passt
+fit_monat1$results$par  #Parameter extrahieren 
+
+# n=20 VaRs berechnen
+VaR95_bmm=numeric(0)
+VaR99_bmm=numeric(0)
+VaR995_bmm=numeric(0)
+monatmax=numeric(0)
+fit=numeric(0)
+for (i in (1:5826)){         #es gibt (6826-1000) Vorhersagen
+  monatmax=period.max(dax_log_xts[i:(i+999)],seq(from=20,to=1000,by=20))    #die groessete monatliche Verlust
+  fit <- fevd(as.vector(monatmax), method = "MLE", type="GEV")
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 10.4833)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 20
+  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 5.4917)[1]  
+  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.5588)[1]
+}
+
+VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[1001:6826])
+VaR99_bmm_xts=xts(VaR99_bmm,dax_log$date[1001:6826])
+VaR95_bmm_xts=xts(VaR95_bmm,dax_log$date[1001:6826]) 
+
+plot(dax_log_xts[1001:6826])  
+lines(VaR995_bmm_xts,col="red")   
+lines(VaR99_bmm_xts,col="blue")    
+lines(VaR95_bmm_xts,col="green")   
+sum(VaR995_bmm_xts<dax_log_xts[1001:6826]) #  63 Ueberschreitungen
+sum(VaR99_bmm_xts<dax_log_xts[1001:6826]) #  120 Ueberschreitungen
+sum(VaR95_bmm_xts<dax_log_xts[1001:6826]) #  494 Ueberschreitungen
+
+#n=50
+VaR95_bmm=numeric(0)
+VaR99_bmm=numeric(0)
+VaR995_bmm=numeric(0)
+n50max=numeric(0)
+fit=numeric(0)
+for (i in (1:5826)){         #es gibt (6826-1000) Vorhersagen
+  n50max=period.max(dax_log_xts[i:(i+999)],seq(from=50,to=1000,by=50))    #die groessete quartalliche Verlust
+  fit <- fevd(as.vector(n50max), method = "MLE", type="GEV")
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 4.5109)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 50
+  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.5317)[1]  
+  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.0834)[1] 
+}
+
+VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[1001:6826])
+VaR99_bmm_xts=xts(VaR99_bmm,dax_log$date[1001:6826])
+VaR95_bmm_xts=xts(VaR95_bmm,dax_log$date[1001:6826]) 
+
+plot(dax_log_xts[1001:6826])  
+lines(VaR995_bmm_xts,col="red")   
+lines(VaR99_bmm_xts,col="blue")    
+lines(VaR95_bmm_xts,col="green")   
+sum(VaR995_bmm_xts<dax_log_xts[1001:6826]) #  84 Ueberschreitungen
+sum(VaR99_bmm_xts<dax_log_xts[1001:6826]) #  160 Ueberschreitungen
+sum(VaR95_bmm_xts<dax_log_xts[1001:6826]) #  579 Ueberschreitungen
 
 
 # mit Theta (extremer Index) Embrechtschap7 P.289
@@ -166,9 +267,16 @@ plot(dax_log_xts[1:250])
 lines(sigma(garch_11)[1:250],col="red")
 
 
-cc=numeric(0)
-for (i in (1:5)){
-cc[i]=i  
-}
-cc
 
+
+#lcation=3.55 (mu), Scale=1.39 (sigma), Shape=0.195 (xi) 
+integrand1 <- function(x) {x/sigma*(1+tao*((x-mu)/sigma))^(-1/tao-1)*exp(-(1+tao*(x-mu)/sigma)^(-1/tao))}
+integrand2 = function(x){mu-sigma/tao*(1-(-log((1-x)^261))^(-tao))}
+sigma=1.39
+mu=3.55
+tao=0.195
+rl_mle <- return.level(fit_mle, conf = 0.05, return.period= c(1.078,2,5,10,20,50,100))
+rl_mle
+integrand2(1-0.0726)
+xx=integrate(integrand2,lower=0,upper=0.01)
+xx$value*100
