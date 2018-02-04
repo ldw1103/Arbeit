@@ -9,7 +9,7 @@ library(rugarch)
 library(skewt)
 library(fGarch)
 library(forecast)
-
+library(evir)
 #Daten Einlesen
 
 daten=read.csv("DAX.csv") #Quelle: finance.yahoo.com
@@ -237,7 +237,7 @@ sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  495 Ueberschreitungen
 #n=60
 n60max=period.max(dax_log_xts,seq(from=60,to=6826,by=60))
 fit_60 <- fevd(as.vector(n60max), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-plot(fit_60)
+#plot(fit_60)
 #return.level(fit_60, conf = 0.05, return.period= c(2,5,10,20,50))
 N15=quantile(dax_log_xts,(6826-15)/6826) #N_u=15
 N20=quantile(dax_log_xts,(6826-20)/6826) #N_u=20
@@ -250,7 +250,7 @@ N200=quantile(dax_log_xts,(6826-200)/6826) #N_u=200
 K15=sum(n60max>N15);K20=sum(n60max>N20);K25=sum(n60max>N25);K30=sum(n60max>N30);K40=sum(n60max>N40);
 K50=sum(n60max>N50);K100=sum(n60max>N100);K200=sum(n60max>N200)
 K15;K20;K25;K30;K40;K50;K100;K200
-theta=function(n,m,Ku,Nu){1/n*log(1-Ku/m)/log(1-Nu/(m*n))}
+theta=function(n,m,Ku,Nu){(log(1-Ku/m)/log(1-Nu/6826))/n}
 #Theta berechnen
 theta15=theta(n=60,m=114,Ku=K15,Nu=15)
 theta20=theta(n=60,m=114,Ku=K20,Nu=20)
@@ -260,8 +260,14 @@ theta40=theta(n=60,m=114,Ku=K40,Nu=40)
 theta50=theta(n=60,m=114,Ku=K50,Nu=50)
 theta100=theta(n=60,m=114,Ku=K100,Nu=100)
 theta200=theta(n=60,m=114,Ku=K200,Nu=200)
-theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta200))
-theta_dach #0.475
+theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta200))#Mcneil 1998 S.13,14
+theta_dach #0.475  
+
+#Theta mir "evir" berechnen. n=60,30 ...
+exindex(dax_log_xts,block=60) #wie waehlt man den Threshold?
+exindex(dax_log_xts,block=30)
+
+
 
 #VaR
 #n=60, Moving Window = 1200
@@ -316,8 +322,8 @@ sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  325 Ueberschreitungen
 
 #n=120
 n120max=period.max(dax_log_xts,seq(from=120,to=6826,by=120))
-fit_120 <- fevd(as.vector(n120max), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-plot(fit_120)
+#fit_120 <- fevd(as.vector(n120max), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+#plot(fit_120)
 #return.level(fit_120, conf = 0.05, return.period= c(2,5,10,20,50))
 N15=quantile(dax_log_xts,(6826-15)/6826) #N_u=15
 N20=quantile(dax_log_xts,(6826-20)/6826) #N_u=20
@@ -330,7 +336,7 @@ N200=quantile(dax_log_xts,(6826-200)/6826) #N_u=200
 K15=sum(n120max>N15);K20=sum(n120max>N20);K25=sum(n120max>N25);K30=sum(n120max>N30);K40=sum(n120max>N40);
 K50=sum(n120max>N50);K100=sum(n120max>N100);K200=sum(n120max>N200)
 K15;K20;K25;K30;K40;K50;K100;K200
-theta=function(n,m,Ku,Nu){1/n*log(1-Ku/m)/log(1-Nu/(m*n))}
+theta=function(n,m,Ku,Nu){1/n*log(1-Ku/m)/log(1-Nu/(6826))}
 #Theta berechnen
 theta15=theta(n=120,m=56,Ku=K15,Nu=15)
 theta20=theta(n=120,m=56,Ku=K20,Nu=20)
@@ -341,7 +347,7 @@ theta50=theta(n=120,m=56,Ku=K50,Nu=50)
 theta100=theta(n=120,m=56,Ku=K100,Nu=100)
 theta200=theta(n=120,m=56,Ku=K200,Nu=200)
 theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta200))
-theta_dach #0.424
+theta_dach #0.430
 
 
 
@@ -375,7 +381,7 @@ garch11 <- ugarchspec(variance.model = list(model = "sGARCH",
                                          fixed.pars = list()))
 
 garch_11 <- ugarchfit(spec = garch11, data = dax_log_xts, solver.control = list(trace=0))
-garch@fit$coef
+garch_11@fit$coef
 show(garch_11)
 garch_11@fit$sigma
 garch_11@fit$z
