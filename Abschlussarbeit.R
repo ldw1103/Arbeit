@@ -43,18 +43,18 @@ jahrmax_bsp=apply.yearly(dax_log_xts,max) #die jaehliche groesste Verlust
 jahrmax_bsp
 plot(jahrmax_bsp)
 
-# maximum-likelihood fitting of the GEV distribution
+# Maximum-Likelihood von GEV
 fit_bsp <- fevd(as.vector(jahrmax_bsp), method = "MLE", type="GEV")
-# diagnostic plots
+# Diagnostik Plots
 plot(fit_bsp)
 fit_bsp$results$par     #Paramter. Location=3.55 (mu), Scale=1.39 (sigma), Shape=0.195 (tau) 
-#xi>0, somit ist es Frechet-Verteilung
+#tau >0, somit ist es Frechet-Verteilung
 
-# return levels:
+# return levels: (2 Jahre, 5 Jahre ...)
 rl_bsp <- return.level(fit_bsp, conf = 0.05, return.period= c(2,5,10,20,50,100))
 rl_bsp
 
-#Unterschiedliche Laenge des Blocks (Woche, Monat, Quartal, Jahr)
+#Unterschiedliche Laenge des Blocks (Jahr, Quartal, Monat, Woche)
 jahrmax=apply.yearly(dax_log_xts,max) #die jaehliche groesste Verlust 
 jahrmax
 plot(jahrmax)
@@ -65,6 +65,7 @@ plot(fit_jahr_lm)
 return.level(fit_jahr, conf = 0.05, return.period= c(2,5,10,20,50))
 return.level(fit_jahr_lm, conf = 0.05, return.period= c(2,5,10,20,50))
 
+#Plot von Return levels anhand Jahresmaxima
 plot(dax_log_xts,main="Verlust und Return Level")
 abline(h=return.level(fit_jahr, conf = 0.05, return.period= c(5,10,20))[1],col="green",lty=3)
 abline(h=return.level(fit_jahr, conf = 0.05, return.period= c(5,10,20))[2],col="blue",lty=2)
@@ -212,7 +213,7 @@ fit=numeric(0)
 for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen
   n60max=period.max(dax_log_xts[i:(i+1199)],seq(from=60,to=1200,by=60))    
   fit <- fevd(as.vector(n60max), method = "MLE", type="GEV")
-  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 4.5109)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 60
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 4.5109)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 60.
   VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.5317)[1]  
   VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.0834)[1] 
 }
@@ -230,11 +231,11 @@ sum(VaR99_bmm_xts<dax_log_xts[1201:6826]) #  145 Ueberschreitungen
 sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  495 Ueberschreitungen
 
 
-# mit Theta (extremer Index) Embrechtschap7 P.289
+# mit Theta (Extremaler Index) Embrechts 1998 Chap8 P.S19
 
 #n=60,n=120. N_u=15,20,25,30,40,50,100,200
 
-#n=60
+#n=60 
 n60max=period.max(dax_log_xts,seq(from=60,to=6826,by=60))
 fit_60 <- fevd(as.vector(n60max), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
 #plot(fit_60)
@@ -264,10 +265,16 @@ theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta
 theta_dach #0.475  
 
 #Theta mir "evir" berechnen. n=60,30 ...
-exindex(dax_log_xts,block=60) #wie waehlt man den Threshold?
-exindex(dax_log_xts,block=30)
+sum(n60max>5)  #17
+index60=exindex(dax_log_xts,block=60) 
+index60 #0.398
 
-
+#n=120 Longin 2000: Block = Semester
+n120max=period.max(dax_log_xts,seq(from=120,to=6826,by=120))
+sum(n120max>quantile(dax_log_xts,0.95)) #Longin: 5% als Threshold. Und Block = Semester
+sum(n120max>5)
+index120=exindex(dax_log_xts,block=120)
+index120 #0.3190
 
 #VaR
 #n=60, Moving Window = 1200
@@ -279,14 +286,14 @@ ES99_bmm=numeric(0)
 ES995_bmm=numeric(0)
 n60max=numeric(0)
 fit=numeric(0)
-VaR60 = function(x){mu-sigma/tau*(1-(-log((1-x)^(60*0.475)))^(-tau))}
+VaR60 = function(x){mu-sigma/tau*(1-(-log((1-x)^(60*0.3190)))^(-tau))}
 
 for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen
   n60max=period.max(dax_log_xts[i:(i+1199)],seq(from=60,to=1200,by=60))    #die groessete quartalliche Verlust
   fit <- fevd(as.vector(n60max), method = "MLE", type="GEV")
-  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 7.5119)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^(n*theta)=(1-1/k). Hier n = 60, theta=0.475
-  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 4.0150)[1]  
-  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.3018)[1] 
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 10.93)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^(n*theta)=(1-1/k). Hier n = 60, Theta=0.3190
+  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 5.7145)[1]  
+  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.5991)[1] 
   mu=as.numeric(fit$results$par[1])
   sigma=as.numeric(fit$results$par[2])
   tau=as.numeric(fit$results$par[3])
@@ -315,44 +322,42 @@ lines(ES99_bmm_xts,col="blue")
 lines(ES95_bmm_xts,col="green")  
 legend("bottomleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
-sum(VaR995_bmm_xts<dax_log_xts[1201:6826]) #  45 Ueberschreitungen
-sum(VaR99_bmm_xts<dax_log_xts[1201:6826]) #  85 Ueberschreitungen
-sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  325 Ueberschreitungen
+sum(VaR995_bmm_xts<dax_log_xts[1201:6826]) #  31 Ueberschreitungen
+sum(VaR99_bmm_xts<dax_log_xts[1201:6826]) #  60 Ueberschreitungen
+sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  248 Ueberschreitungen
 
 
 #n=120
-n120max=period.max(dax_log_xts,seq(from=120,to=6826,by=120))
+#n120max=period.max(dax_log_xts,seq(from=120,to=6826,by=120))
 #fit_120 <- fevd(as.vector(n120max), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
 #plot(fit_120)
 #return.level(fit_120, conf = 0.05, return.period= c(2,5,10,20,50))
-N15=quantile(dax_log_xts,(6826-15)/6826) #N_u=15
-N20=quantile(dax_log_xts,(6826-20)/6826) #N_u=20
-N25=quantile(dax_log_xts,(6826-25)/6826) #N_u=25
-N30=quantile(dax_log_xts,(6826-30)/6826) #N_u=30
-N40=quantile(dax_log_xts,(6826-40)/6826) #N_u=40
-N50=quantile(dax_log_xts,(6826-50)/6826) #N_u=50
-N100=quantile(dax_log_xts,(6826-100)/6826) #N_u=100
-N200=quantile(dax_log_xts,(6826-200)/6826) #N_u=200
-K15=sum(n120max>N15);K20=sum(n120max>N20);K25=sum(n120max>N25);K30=sum(n120max>N30);K40=sum(n120max>N40);
-K50=sum(n120max>N50);K100=sum(n120max>N100);K200=sum(n120max>N200)
-K15;K20;K25;K30;K40;K50;K100;K200
-theta=function(n,m,Ku,Nu){1/n*log(1-Ku/m)/log(1-Nu/(6826))}
+#N15=quantile(dax_log_xts,(6826-15)/6826) #N_u=15
+#N20=quantile(dax_log_xts,(6826-20)/6826) #N_u=20
+#N25=quantile(dax_log_xts,(6826-25)/6826) #N_u=25
+#N30=quantile(dax_log_xts,(6826-30)/6826) #N_u=30
+#N40=quantile(dax_log_xts,(6826-40)/6826) #N_u=40
+#N50=quantile(dax_log_xts,(6826-50)/6826) #N_u=50
+#N100=quantile(dax_log_xts,(6826-100)/6826) #N_u=100
+#N200=quantile(dax_log_xts,(6826-200)/6826) #N_u=200
+#K15=sum(n120max>N15);K20=sum(n120max>N20);K25=sum(n120max>N25);K30=sum(n120max>N30);K40=sum(n120max>N40);
+#K50=sum(n120max>N50);K100=sum(n120max>N100);K200=sum(n120max>N200)
+#K15;K20;K25;K30;K40;K50;K100;K200
+#theta=function(n,m,Ku,Nu){1/n*log(1-Ku/m)/log(1-Nu/(6826))}
 #Theta berechnen
-theta15=theta(n=120,m=56,Ku=K15,Nu=15)
-theta20=theta(n=120,m=56,Ku=K20,Nu=20)
-theta25=theta(n=120,m=56,Ku=K25,Nu=25)
-theta30=theta(n=120,m=56,Ku=K30,Nu=30)
-theta40=theta(n=120,m=56,Ku=K40,Nu=40)
-theta50=theta(n=120,m=56,Ku=K50,Nu=50)
-theta100=theta(n=120,m=56,Ku=K100,Nu=100)
-theta200=theta(n=120,m=56,Ku=K200,Nu=200)
-theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta200))
-theta_dach #0.430
+#theta15=theta(n=120,m=56,Ku=K15,Nu=15)
+#theta20=theta(n=120,m=56,Ku=K20,Nu=20)
+#theta25=theta(n=120,m=56,Ku=K25,Nu=25)
+#theta30=theta(n=120,m=56,Ku=K30,Nu=30)
+#theta40=theta(n=120,m=56,Ku=K40,Nu=40)
+#theta50=theta(n=120,m=56,Ku=K50,Nu=50)
+#theta100=theta(n=120,m=56,Ku=K100,Nu=100)
+#theta200=theta(n=120,m=56,Ku=K200,Nu=200)
+#theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta200))
+#theta_dach #0.430
 
 
-
-
-
+###############POT################
 
 
 
@@ -390,16 +395,3 @@ plot(dax_log_xts[1:250])
 lines(sigma(garch_11)[1:250],col="red")
 
 
-######Skript
-
-#lcation=3.55 (mu), Scale=1.39 (sigma), Shape=0.195 (xi) 
-integrand1 <- function(x) {x/sigma*(1+tao*((x-mu)/sigma))^(-1/tao-1)*exp(-(1+tao*(x-mu)/sigma)^(-1/tao))}
-VaR = function(x,n){mu-sigma/tao*(1-(-log((1-x)^n))^(-tao))}
-sigma=1.39
-mu=3.55
-tao=0.195
-rl_mle <- return.level(fit_mle, conf = 0.05, return.period= c(1.078,2,5,10,20,50,100))
-rl_mle
-integrand2(1-0.0726)
-xx=integrate(integrand2,lower=0,upper=0.01)
-xx$value*100
