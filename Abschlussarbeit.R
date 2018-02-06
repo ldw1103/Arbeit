@@ -358,6 +358,36 @@ sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  248 Ueberschreitungen
 
 
 ###############POT################
+# Mean Residual Life Plot: (Mean Excess)
+mrlplot(dax_log_xts, main="Mean Residual Life Plot")    #u ist vielleicht in (0,3)
+evir::meplot(dax_log_xts,xlim=c(0,6),ylim=c(1,1.5),type="l")  #u ist 3.5
+
+
+# mit unterschiedlichen Grenzwerten
+threshrange.plot(dax_log_xts, r = c(2, 5), nint = 16)
+# ismev Implementation ist schneller:
+ismev::gpd.fitrange(dax_log_xts, umin=2, umax=5, nint = 16)
+
+
+# MLE
+pot_mle <- fevd(as.vector(dax_log_xts), method = "MLE", type="GP", threshold=3)
+# Diagnostik
+plot(pot_mle)
+rl_mle <- return.level(pot_mle, conf = 0.05, return.period= c(2,5,10,20,50,100))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
