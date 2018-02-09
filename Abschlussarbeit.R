@@ -359,29 +359,127 @@ sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  248 Ueberschreitungen
 
 ###############POT################
 # Mean Residual Life Plot: (Mean Excess)
-mrlplot(dax_log_xts, main="Mean Residual Life Plot")    #u ist vielleicht in (0,3)
-evir::meplot(dax_log_xts,xlim=c(0,6),ylim=c(1,1.5),type="l")  #u ist 3.5
+mrlplot(dax_log_xts, main="Mean Residual Life Plot")    #u ist vielleicht in (0,3), aber nicht informative
+meplot(dax_log_xts,xlim=c(0,5),ylim=c(1,1.5),type="l")  #u ist 3.5. Nach 3.5 ist linear. Ist (6826-100)6826=0.9854Quantil
 
+
+#Hill-Schaetzer (Hill, 1975) (Mecneil 2000) tau^dach=1/k*Sigma^k_(j=1)(log(zj)-log(z(k+1))). 
+
+#####Aber shape-Parameter muss >0! Kann noch als Instrument zur Threshold-Wahl?
+n=6826
+evir::hill(dax_log_xts,xlim=c(15,160))  #Hill Plot  k=ungefaehr 100, y = ungefaehr 3.2.
+quantile(dax_log_xts,(6826-100)/6826)  # Threshold wird als 3.50 gewaehlt.
+
+
+dax_log_order=sort(-dax_log$logreturn,decreasing = TRUE) 
+dax_log_order[100]#u = 3.50
+
+taudach=numeric(0)
+for (i in (15:300)){
+  taudach[i]=1/i*sum(log(dax_log_order[1:i])-log(dax_log_order[i]))
+}
+plot(taudach,type="l")    #identisch zur evir::hill. tau = ungefaehr 0.31.
 
 # mit unterschiedlichen Grenzwerten
-threshrange.plot(dax_log_xts, r = c(2, 5), nint = 16)
+threshrange.plot(dax_log_xts, r = c(2, 4), nint = 16)
 # ismev Implementation ist schneller:
-ismev::gpd.fitrange(dax_log_xts, umin=2, umax=5, nint = 16)
+ismev::gpd.fitrange(dax_log_xts, umin=3, umax=4, nint = 16) # nicht informative
 
 
-# MLE
-pot_mle <- fevd(as.vector(dax_log_xts), method = "MLE", type="GP", threshold=3)
+# MLE mit extRemes
+pot_mle <- fevd(as.vector(dax_log_xts), method = "MLE", type="GP", threshold=3.50)
 # Diagnostik
+pot_mle$results$par  #geschaetzte Parameter
 plot(pot_mle)
-rl_mle <- return.level(pot_mle, conf = 0.05, return.period= c(2,5,10,20,50,100))
 
+#Mle mit evir
+pot_mle_evir=gpd(dax_log_xts,threshold=3.50,method = "ml")
+pot_mle_evir$par.ests
+par(mfrow=c(2,2))
+plot(pot_mle_evir) #diagnostik. gut gepasst
 
+#Unbedingte VaR-Schaetzung
+r=riskmeasures(pot_mle_evir,c(0.95,0.99,0.995))
 
+#Moving Windows mit Laenge 1200
+VaR95_pot=numeric(0)
+VaR99_pot=numeric(0)
+VaR995_pot=numeric(0)
+ES95_pot=numeric(0)
+ES99_pot=numeric(0)
+ES995_pot=numeric(0)
+fit=numeric(0)
+for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen  
+  gpdpot=gpd(dax_log_xts[i:(1199+i)],threshold=quantile(dax_log_xts[i:(1199+i)],(1200-120)/1200),method = "ml")
+  #Mcneil,2000 S.17 the choice of k in Moving Window (10%)
+  risk=riskmeasures(gpdpot,c(0.95,0.99,0.995))
+  VaR995_pot[i]=risk[6]
+  VaR99_pot[i]=risk[5]
+  VaR95_pot[i]=risk[4]
+  ES995_pot[i]=risk[9]
+  ES99_pot[i]=risk[8]
+  ES95_pot[i]=risk[7]
+}  #Fuer jeden Schritt ist ein Threshold zu waehlen?? 
 
+VaR995_pot_xts=xts(VaR995_pot,dax_log$date[1201:6826])
+VaR99_pot_xts=xts(VaR99_pot,dax_log$date[1201:6826])
+VaR95_pot_xts=xts(VaR95_pot,dax_log$date[1201:6826]) 
 
+plot(dax_log_xts[1201:6826])  
+lines(VaR995_pot_xts,col="red")   
+lines(VaR99_pot_xts,col="blue")    
+lines(VaR95_pot_xts,col="green")   
+sum(VaR995_pot_xts<dax_log_xts[1201:6826]) #  41 Ueberschreitungen
+sum(VaR99_pot_xts<dax_log_xts[1201:6826]) #  76 Ueberschreitungen
+sum(VaR95_pot_xts<dax_log_xts[1201:6826]) #  316 Ueberschreitungen
 
+######Danielsson2001 Threshold mit Hilfe von Bootstrap
+#install.packages("tea")
+library(tea) # Package zum Danielssons Bootstrap
+danielsson(dax_log$logreturn,B=100) #Threshold= 4.20. aber das Verfahren kostet mehr als 20 Minuten
 
+eye(dax_log$logreturn)  #error
 
+GH(dax_log$logreturn)  #funktioniert. Guillou,A.andHall,P.(2001)ADiagnosticforSelectingtheThresholdinExtremeValueAnalysis
+
+gomes(dax_log$logreturn,B=10,epsilon = 0.995)  #error
+
+hall(dax_log$logreturn)#Threshold = 2.86
+
+Himp(dax_log$logreturn)
+
+###GH. Denn GH hat keinen Fehler
+#Moving Windows mit Laenge 1200
+VaR95_pot=numeric(0)
+VaR99_pot=numeric(0)
+VaR995_pot=numeric(0)
+ES95_pot=numeric(0)
+ES99_pot=numeric(0)
+ES995_pot=numeric(0)
+for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen  
+  gg=GH(dax_log$logreturn[i:(1199+i)])
+  ts=gg$threshold
+  gpdpot=gpd(dax_log$logreturn[i:(1199+i)],threshold=ts,method = "ml")
+  risk=riskmeasures(gpdpot,c(0.95,0.99,0.995))
+  VaR995_pot[i]=risk[6]
+  VaR99_pot[i]=risk[5]
+  VaR95_pot[i]=risk[4]
+  ES995_pot[i]=risk[9]
+  ES99_pot[i]=risk[8]
+  ES95_pot[i]=risk[7]
+}  ###non-finite finite-difference value [1]
+
+VaR995_pot_xts=xts(VaR995_pot,dax_log$date[1201:6826])
+VaR99_pot_xts=xts(VaR99_pot,dax_log$date[1201:6826])
+VaR95_pot_xts=xts(VaR95_pot,dax_log$date[1201:6826]) 
+
+plot(dax_log_xts[1201:6826])  
+lines(VaR995_pot_xts,col="red")   
+lines(VaR99_pot_xts,col="blue")    
+lines(VaR95_pot_xts,col="green")   
+sum(VaR995_pot_xts<dax_log_xts[1201:6826]) #  41 Ueberschreitungen
+sum(VaR99_pot_xts<dax_log_xts[1201:6826]) #  76 Ueberschreitungen
+sum(VaR95_pot_xts<dax_log_xts[1201:6826]) #  316 Ueberschreitungen
 
 
 
