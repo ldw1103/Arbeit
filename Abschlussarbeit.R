@@ -3,58 +3,65 @@
 #install.packages("xts")
 library(extRemes) #Extremwerttheorie
 library(xts)      #eXtensible Time Series
-library(tseries)
+library(tseries)  #Zeitreihe
 library(MASS)
-library(rugarch)
-library(skewt)
-library(fGarch)
+library(rugarch)  #univariate GARCH
+library(skewt)    #Skewed-t-Verteilung
+library(fGarch)   #GARCH
 library(forecast)
-library(evir)
-#Daten Einlesen
+library(evir)   #auch Extremwerttheorie
 
+#Daten Einlesen
 daten=read.csv("DAX.csv") #Quelle: finance.yahoo.com
 daten_omit=daten[!daten$Open=="null",] #Fehlende Werte wegnehmen
-dim(daten_omit) #noch 6827 Beobachtungen
+dim(daten_omit)                     #noch 6827 Beobachtungen
 dax=daten_omit[,1:2]#Nur Datum und Schlusskurs bleiben
 dax$Close=as.numeric(as.character(dax$Close))
 dax$Date=as.Date(dax$Date)         #Datentyp von Datum transformieren
 dax_xts=xts(dax$Close,dax$Date)    #xts-Format
 plot(dax_xts)
 
-n=length(dax$Close)
+n=length(dax$Close)    
 logreturn <- 100*log(dax$Close[-1]/dax$Close[-n])#log Return
 dax_log=data.frame(dax$Date[-1],logreturn)  #2 Spalten, Datum und Log-Return
 names(dax_log)[names(dax_log)=="dax.Date..1."] <- "date"  #Name verkuerzen
 dax_log$date=as.Date(dax_log$date)                      #Datentyp von Datum transformieren
 dax_log_xts=xts(dax_log$logreturn,dax_log$date)         #xts-Format
 head(dax_log_xts)
-plot(dax_log_xts)                                     #Plot von Log_Return, aber warum chinesisch?
+plot(dax_log_xts)                                      #Plot von Log_Return, aber warum chinesisch?
+length(dax_log_xts)#Laenge=6826
 #plot(dax_log$date,dax_log$logreturn,type = "l")
 hist(dax_log_xts,breaks=100)                       #Hist von Log-Return
 stats::qqnorm(dax_log$logreturn);qqline(dax_log$logreturn)  #leptokurtisch
 
 adf.test(dax_log_xts)   #ADF-Test: p=0.01, deshalb ist es stationaer.
 
-dax_log_xts=-dax_log_xts  # Vorzeichen umkehren, Verlust statt Rendite
+dax_log_xts=-dax_log_xts  # Vorzeichen umkehren, Verlust statt Rendite. --Negative Returns
 plot(dax_log_xts)
+
+#Block-Maxima-Methode
 
 #Jaehrliche Maxima als Beispiel
 jahrmax_bsp=apply.yearly(dax_log_xts,max) #die jaehliche groesste Verlust 
-jahrmax_bsp
+length(jahrmax_bsp) #28 Jahre = 28 Beobachtungen
 plot(jahrmax_bsp)
 
-# Maximum-Likelihood von GEV
+# Maximum-Likelihood von GEV (extRemes Package)
 fit_bsp <- fevd(as.vector(jahrmax_bsp), method = "MLE", type="GEV")
 # Diagnostik Plots
 plot(fit_bsp)
-fit_bsp$results$par     #Paramter. Location=3.55 (mu), Scale=1.39 (sigma), Shape=0.195 (tau) 
-#tau >0, somit ist es Frechet-Verteilung
+fit_bsp$results$par     #Paramter. Location=3.55 (mu), Scale=1.39 (sigma), Shape=0.195 (xi) #xi >0, somit ist es Frechet-Verteilung
+# oder mit evir Package:
+fit_bsp_evir=evir::gev(dax_log_xts,block = 240)  #1 Jahre hat 240 Beobachtungen
+plot(fit_bsp_evir) #gut gefittet
+fit_bsp_evir$par.ests   #mu=3.44, sigma=1.44,xi=0.16
+
 
 # return levels: (2 Jahre, 5 Jahre ...)
 rl_bsp <- return.level(fit_bsp, conf = 0.05, return.period= c(2,5,10,20,50,100))
 rl_bsp
 
-#Unterschiedliche Laenge des Blocks (Jahr, Quartal, Monat, Woche)
+#Unterschiedliche Laenge des Blocks (Jahr, Quartal, Monat)
 jahrmax=apply.yearly(dax_log_xts,max) #die jaehliche groesste Verlust 
 jahrmax
 plot(jahrmax)
@@ -65,8 +72,7 @@ plot(fit_jahr_lm)
 return.level(fit_jahr, conf = 0.05, return.period= c(2,5,10,20,50))
 return.level(fit_jahr_lm, conf = 0.05, return.period= c(2,5,10,20,50))
 
-#Plot von Return levels anhand Jahresmaxima
-plot(dax_log_xts,main="Verlust und Return Level")
+plot(dax_log_xts,main="Verlust und Return Level") #Plot von Return levels anhand Jahresmaxima
 abline(h=return.level(fit_jahr, conf = 0.05, return.period= c(5,10,20))[1],col="green",lty=3)
 abline(h=return.level(fit_jahr, conf = 0.05, return.period= c(5,10,20))[2],col="blue",lty=2)
 abline(h=return.level(fit_jahr, conf = 0.05, return.period= c(5,10,20))[3],col="red",lty=1)
@@ -93,13 +99,6 @@ plot(fit_monatmax_lm)
 plot(fit_monatmax) 
 return.level(fit_monatmax, conf = 0.05, return.period= c(2,5,10,20,50))
 return.level(fit_monatmax_lm, conf = 0.05, return.period= c(2,5,10,20,50))
-
-
-wochemax=apply.weekly(dax_log_xts,max) #die woechentliche groesste Verlust 
-wochemax
-plot(wochemax)
-fit_woche <- fevd(as.vector(wochemax), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-plot(fit_woche) 
 
 
 # Monatlich Moving Window (Groesse=1000) Zum Beispiel: das erste Fenster
@@ -163,33 +162,95 @@ sum(VaR995_bmm_xts<dax_log_xts[1001:6826]) #  86 Ueberschreitungen
 sum(VaR99_bmm_xts<dax_log_xts[1001:6826]) #  164 Ueberschreitungen
 sum(VaR95_bmm_xts<dax_log_xts[1001:6826]) #  666 Ueberschreitungen
 
-###Problem mit Daten und apply.monthly!!!!!! Die Laenge des Intervalls ist unterschiedlich!! (Das erste und das letzte sind manchmal zu klein.)
+###Problem mit Daten und apply.monthly!!!!!! Die Laenge des Intervalls ist unterschiedlich!! 
+#(Das erste und das letzte sind manchmal zu klein!)
 ## Deshalb werden die Daten aequidistant unterteilt wie folgt:
 
 period.max(dax_log_xts,seq(from=1,to=6826,by=20))  #Monatlich z.B.
 
+###Goodness of Fit fuer GEV (Stephens 1977)
+bmm_monat_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=20))
+bmm_quartal_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=60))
+bmm_semester_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=120))
+bmm_jahr_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=240))
+####Monat:
+fit_monat_st <- fevd(as.vector(bmm_monat_st), method = "MLE", type="GEV") 
+x_monat_st=sort(fit_monat_st$x)    ####von klein zu gross geordnet
+z_monat_st=pgev(x_monat_st,xi=fit_monat_st$results$par[3],mu=fit_monat_st$results$par[1],sigma=fit_monat_st$results$par[2])
+##Stephens 1977 S.2
+statistic_W_1=0
+for (i in (1:length(z_monat_st))){
+  statistic_W_1=statistic_W_1+(z_monat_st[i]-(2*i-1)/(2*length(z_monat_st)))^2
+}
+statistic_W=statistic_W_1+1/(12*length(z_monat_st))
+statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_monat_st)))  ###0.33>0.124 #H0 abgelehnt.
 
-# Moving Window (Groesse=1200) Zum Beispiel: das erste Fenster. Laenge=1200, damit durch 20,60,30 perfekt aufteilbar
+###Quartal
+fit_quartal_st <- fevd(as.vector(bmm_quartal_st), method = "MLE", type="GEV") 
+x_quartal_st=sort(fit_quartal_st$x)    ####von klein zu gross geordnet
+z_quartal_st=pgev(x_quartal_st,xi=fit_quartal_st$results$par[3],mu=fit_quartal_st$results$par[1],sigma=fit_quartal_st$results$par[2])
+##Stephens 1977 S.2
+statistic_W_1=0
+for (i in (1:length(z_quartal_st))){
+  statistic_W_1=statistic_W_1+(z_quartal_st[i]-(2*i-1)/(2*length(z_quartal_st)))^2
+}
+statistic_W=statistic_W_1+1/(12*length(z_quartal_st))
+statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_quartal_st)))  ###0.35>0.124 #H0 abgelehnt.
+
+#Semester
+fit_semester_st <- fevd(as.vector(bmm_semester_st), method = "MLE", type="GEV") 
+x_semester_st=sort(fit_semester_st$x)    ####von klein zu gross geordnet
+z_semester_st=pgev(x_semester_st,xi=fit_semester_st$results$par[3],mu=fit_semester_st$results$par[1],sigma=fit_semester_st$results$par[2])
+##Stephens 1977 S.2
+statistic_W_1=0
+for (i in (1:length(z_semester_st))){
+  statistic_W_1=statistic_W_1+(z_semester_st[i]-(2*i-1)/(2*length(z_semester_st)))^2
+}
+statistic_W=statistic_W_1+1/(12*length(z_semester_st))
+statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_semester_st)))  ###0.086<0.124 #H0 nicht abgelehnt.
+
+##Jahr
+fit_jahr_st <- fevd(as.vector(bmm_jahr_st), method = "MLE", type="GEV") 
+x_jahr_st=sort(fit_jahr_st$x)    ####von klein zu gross geordnet
+z_jahr_st=pgev(x_jahr_st,xi=fit_jahr_st$results$par[3],mu=fit_jahr_st$results$par[1],sigma=fit_jahr_st$results$par[2])
+##Stephens 1977 S.2
+statistic_W_1=0
+for (i in (1:length(z_jahr_st))){
+  statistic_W_1=statistic_W_1+(z_jahr_st[i]-(2*i-1)/(2*length(z_jahr_st)))^2
+}
+statistic_W=statistic_W_1+1/(12*length(z_jahr_st))
+statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_jahr_st)))  ###0.04<0.124 #H0 nicht abgelehnt.
+
+####semesterliche und jaehrliche bestehen bei dem Test. Deshalb wird n = 120 gewaehlt! (mehr Beobachtungen als die jaehlichen)  
+
+
+# Moving Window (Groesse=1200) Zum Beispiel: das erste Fenster. Laenge=1200, damit durch 20,60,120,240 perfekt aufteilbar
 ts_bm_1=dax_log_xts[1:1200]   
-monatmax1=period.max(ts_bm_1,seq(from=20,to=1200,by=20))   #die groessete monatliche Verlust
-monatmax1
-plot(monatmax1)
-fit_monat1 <- fevd(as.vector(monatmax1), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-plot(fit_monat1)         #passt
-fit_monat1$results$par  #Parameter extrahieren 
+semestermax1=period.max(ts_bm_1,seq(from=120,to=1200,by=120))   #die groessete semesterliche Verlust
+semestermax1
+plot(semestermax1)
+fit_semester1 <- fevd(as.vector(semestermax1), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+fit_semester1_evir=gev(dax_log_xts,block = 120)
+plot(fit_semester1_evir)         #passt
+fit_semester1$results$par  #Parameter extrahieren 
 
-# n=20 VaRs berechnen. n=20 ist monatlich
+# VaRs berechnen. n=120 ist semesterlich
 VaR95_bmm=numeric(0)
 VaR99_bmm=numeric(0)
 VaR995_bmm=numeric(0)
 monatmax=numeric(0)
 fit=numeric(0)
+#returnlevel = function(x,mu,sigma,xi){mu-sigma/xi*(1-(-log((1-x)^120))^(-xi))}
 for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen
-  monatmax=period.max(dax_log_xts[i:(i+1199)],seq(from=20,to=1200,by=20))    #die groessete monatliche Verlust
-  fit <- fevd(as.vector(monatmax), method = "MLE", type="GEV")
-  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 10.4833)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 20
-  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 5.4917)[1]  
-  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.5588)[1]
+  semestermax=period.max(dax_log_xts[i:(i+1199)],seq(from=60,to=1200,by=60))    #die groessete semesterliche Verlust
+  fit <- fevd(as.vector(semestermax), method = "MLE", type="GEV")
+  #fit = gev(dax_log_xts[i:(i+1199)],block=120)
+  #VaR995_bmm[i]=returnlevel(0.005,mu=fit$par.ests[3],sigma=fit$par.ests[2],xi=fit$par.ests[1])#rlevel.gev(fit,2.212322)[2]
+   # VaR99_bmm[i]=returnlevel(0.01,mu=fit$par.ests[3],sigma=fit$par.ests[2],xi=fit$par.ests[1])#rlevel.gev(fit,1.427308)[2]
+    #VaR95_bmm[i]=returnlevel(0.05,mu=fit$par.ests[3],sigma=fit$par.ests[2],xi=fit$par.ests[1])#rlevel.gev(fit,1.002127)[2]
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.212322)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 120
+  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.427308)[1]  
+  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.002127)[1]
 }
 
 VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[1201:6826])
@@ -200,36 +261,9 @@ plot(dax_log_xts[1201:6826])
 lines(VaR995_bmm_xts,col="red")   
 lines(VaR99_bmm_xts,col="blue")    
 lines(VaR95_bmm_xts,col="green")   
-sum(VaR995_bmm_xts<dax_log_xts[1201:6826]) #  67 Ueberschreitungen
-sum(VaR99_bmm_xts<dax_log_xts[1201:6826]) #  115 Ueberschreitungen
-sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  495 Ueberschreitungen
-
-#n=60 n =60 ist quartallich
-VaR95_bmm=numeric(0)
-VaR99_bmm=numeric(0)
-VaR995_bmm=numeric(0)
-n50max=numeric(0)
-fit=numeric(0)
-for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen
-  n60max=period.max(dax_log_xts[i:(i+1199)],seq(from=60,to=1200,by=60))    
-  fit <- fevd(as.vector(n60max), method = "MLE", type="GEV")
-  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 4.5109)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 60.
-  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.5317)[1]  
-  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.0834)[1] 
-}
-
-VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[1201:6826])
-VaR99_bmm_xts=xts(VaR99_bmm,dax_log$date[1201:6826])
-VaR95_bmm_xts=xts(VaR95_bmm,dax_log$date[1201:6826]) 
-
-plot(dax_log_xts[1201:6826])  
-lines(VaR995_bmm_xts,col="red")   
-lines(VaR99_bmm_xts,col="blue")    
-lines(VaR95_bmm_xts,col="green")   
-sum(VaR995_bmm_xts<dax_log_xts[1201:6826]) #  76 Ueberschreitungen
-sum(VaR99_bmm_xts<dax_log_xts[1201:6826]) #  145 Ueberschreitungen
-sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  495 Ueberschreitungen
-
+sum(VaR995_bmm_xts<dax_log_xts[1201:6826]) # 171 Ueberschreitungen
+sum(VaR99_bmm_xts<dax_log_xts[1201:6826]) #  285 Ueberschreitungen
+sum(VaR95_bmm_xts<dax_log_xts[1201:6826]) #  849 Ueberschreitungen
 
 # mit Theta (Extremaler Index) Embrechts 1998 Chap8 P.S19
 
@@ -286,7 +320,7 @@ ES99_bmm=numeric(0)
 ES995_bmm=numeric(0)
 n60max=numeric(0)
 fit=numeric(0)
-VaR60 = function(x){mu-sigma/tau*(1-(-log((1-x)^(60*0.3190)))^(-tau))}
+VaR60 = function(x){mu-sigma/tau*(1-(-log((1-x)^(60*0.3190)))^(-tau))} #tau = xi = shape Parameter
 
 for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen
   n60max=period.max(dax_log_xts[i:(i+1199)],seq(from=60,to=1200,by=60))    #die groessete quartalliche Verlust
@@ -365,7 +399,7 @@ meplot(dax_log_xts,xlim=c(0,5),ylim=c(1,1.5),type="l")  #u ist 3.5. Nach 3.5 ist
 
 #Hill-Schaetzer (Hill, 1975) (Mecneil 2000) tau^dach=1/k*Sigma^k_(j=1)(log(zj)-log(z(k+1))). 
 
-#####Aber shape-Parameter muss >0! Kann noch als Instrument zur Threshold-Wahl?
+#####Aber shape-Parameter muss >0! (Mcneil 2000 Seite.17) Kann noch als Instrument zur Threshold-Wahl?
 n=6826
 evir::hill(dax_log_xts,xlim=c(15,160))  #Hill Plot  k=ungefaehr 100, y = ungefaehr 3.2.
 quantile(dax_log_xts,(6826-100)/6826)  # Threshold wird als 3.50 gewaehlt.
@@ -408,7 +442,6 @@ VaR995_pot=numeric(0)
 ES95_pot=numeric(0)
 ES99_pot=numeric(0)
 ES995_pot=numeric(0)
-fit=numeric(0)
 for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen  
   gpdpot=gpd(dax_log_xts[i:(1199+i)],threshold=quantile(dax_log_xts[i:(1199+i)],(1200-120)/1200),method = "ml")
   #Mcneil,2000 S.17 the choice of k in Moving Window (10%)
@@ -419,7 +452,7 @@ for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen
   ES995_pot[i]=risk[9]
   ES99_pot[i]=risk[8]
   ES95_pot[i]=risk[7]
-}  #Fuer jeden Schritt ist ein Threshold zu waehlen?? 
+}  
 
 VaR995_pot_xts=xts(VaR995_pot,dax_log$date[1201:6826])
 VaR99_pot_xts=xts(VaR99_pot,dax_log$date[1201:6826])
@@ -483,43 +516,154 @@ sum(VaR95_pot_xts<dax_log_xts[1201:6826]) #  316 Ueberschreitungen
 
 
 
+##POT mit GARCH
+
+library(fGarch)
+garchfit1=garchFit(formula=~garch(1,1),data=dax_log_xts)
+garchfit1
+
+garchfit2=garchFit(formula=~garch(1,1),data=dax_log_xts,cond.dist ="QMLE")
+garchfit2
+
+#####AR(1)-GARCH(1,1) Mcneil 2000
+garchfit3=garchFit(formula=~arma(1,0)+garch(1,1),data=dax_log_xts,cond.dist ="QMLE")
+garchfit3@fit$par
+garchfit3@residuals
+garchfit3@sigma.t    #sd
+garchfit3@h.t       #Var  
+garchfit3@fitted    
+
+zt=(dax_log_xts-garchfit3@fitted)/garchfit3@sigma.t   #standardisierte Residuen
+plot(zt)
+plot(abs(dax_log_xts))
+plot(garchfit3@sigma.t,type="l")
+
+par(mfrow=c(2,2))
+acf(dax_log_xts);acf(abs(dax_log_xts))  #nicht i.i.d
+acf(zt);acf(abs(zt))     #keinen ARCH-Effekt
+
+Box.test(dax_log_xts,lag=10,type="Ljung-Box") #p=0.00 H0: unabhaengig verteilt
+Box.test(zt,lag=10,type="Ljung-Box")  #p=0.53
+
+stats::qqnorm(zt);qqline(dax_log$logreturn)
+
+evir::hill(zt,xlim=c(15,300))  #Hill Plot  k=ungefaehr 70, y = ungefaehr 5.
+quantile(zt,(6826-70)/6826)  # Threshold wird als 2.54 gewaehlt.
+
+
+zt_order=sort((-dax_log$logreturn-garchfit3@fitted)/garchfit3@sigma.t,decreasing = TRUE) 
+zt_order[70]#u = 2.54
+
+taudach1=numeric(0)
+for (i in (15:200)){
+  taudach1[i]=1/i*sum(log(zt_order[1:i])-log(zt_order[i]))
+}
+plot(taudach1,type="l")    #identisch zur evir::hill. tau = ungefaehr 0.19.
+
+# mit unterschiedlichen Grenzwerten
+threshrange.plot(zt, r = c(2, 4), nint = 16)
+# ismev Implementation ist schneller:
+ismev::gpd.fitrange(zt, umin=2, umax=4, nint = 16) # nicht informativ
+
+
+# MLE mit extRemes
+pot_mle_garch <- fevd(as.vector(zt), method = "MLE", type="GP", threshold=2.54)
+# Diagnostik
+pot_mle_garch$results$par  #geschaetzte Parameter
+plot(pot_mle_garch)
+
+#Mle mit evir
+pot_mle_evir_garch=gpd(zt,threshold=2.54,method = "ml")
+pot_mle_evir_garch$par.ests
+par(mfrow=c(2,2))
+plot(pot_mle_evir_garch) #diagnostik. gut gepasst
+
+#Unbedingte VaR-Schaetzung
+r=riskmeasures(pot_mle_evir_garch,c(0.95,0.99,0.995))
+
+#Moving Windows mit Laenge 1200 (Aber hier, die Parameter von GARCH veraendern sich nicht mit dem Moving Window)
+VaR95_pot_garch=numeric(0)
+VaR99_pot_garch=numeric(0)
+VaR995_pot_garch=numeric(0)
+ES95_pot_garch=numeric(0)
+ES99_pot_garch=numeric(0)
+ES995_pot_garch=numeric(0)
+for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen 
+  gpdpotgarch=fevd(as.vector(zt[i:(1199+i)]), method = "MLE", type="GP", threshold=quantile(zt[i:(1199+i)],(1200-120)/1200))
+  VaR995_pot_garch[i]=quantile(zt[i:(1199+i)],0.9)+gpdpotgarch$results$par[1]/gpdpotgarch$results$par[2]*((1200*0.005/120)^(-gpdpotgarch$results$par[2])-1)
+  VaR99_pot_garch[i]=quantile(zt[i:(1199+i)],0.9)+gpdpotgarch$results$par[1]/gpdpotgarch$results$par[2]*((1200*0.01/120)^(-gpdpotgarch$results$par[2])-1)
+  VaR95_pot_garch[i]=quantile(zt[i:(1199+i)],0.9)+gpdpotgarch$results$par[1]/gpdpotgarch$results$par[2]*((1200*0.05/120)^(-gpdpotgarch$results$par[2])-1)
+}  
+
+VaR995_pot_xts_garch=xts(VaR995_pot_garch*garchfit3@sigma.t[1201:6826]+garchfit3@fitted[1201:6826],dax_log$date[1201:6826])#Mcneil S.6
+VaR99_pot_xts_garch=xts(VaR99_pot_garch*garchfit3@sigma.t[1201:6826]+garchfit3@fitted[1201:6826],dax_log$date[1201:6826])
+VaR95_pot_xts_garch=xts(VaR95_pot_garch*garchfit3@sigma.t[1201:6826]+garchfit3@fitted[1201:6826],dax_log$date[1201:6826]) 
+
+plot(dax_log_xts[1201:6826])  
+lines(VaR995_pot_xts_garch,col="red")   
+lines(VaR99_pot_xts_garch,col="blue")    
+lines(VaR95_pot_xts_garch,col="green")   
+sum(VaR995_pot_xts_garch<zt[1201:6826]) #  28 Ueberschreitungen
+sum(VaR99_pot_xts_garch<zt[1201:6826]) #  48 Ueberschreitungen
+sum(VaR95_pot_xts_garch<zt[1201:6826]) #  239 Ueberschreitungen
+
+#ES berechnen  Mcneil 2000 S.23 Gleichung-(17) 
+ES995_pot_xts_garch=xts(garchfit3@fitted[1201:6826]+garchfit3@sigma.t[1201:6826]*VaR995_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(1199+i)],0.9))/(VaR995_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[1201:6826])
+ES99_pot_xts_garch=xts(garchfit3@fitted[1201:6826]+garchfit3@sigma.t[1201:6826]*VaR99_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(1199+i)],0.9))/(VaR99_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[1201:6826])
+ES95_pot_xts_garch=xts(garchfit3@fitted[1201:6826]+garchfit3@sigma.t[1201:6826]*VaR95_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(1199+i)],0.9))/(VaR95_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[1201:6826])
+
+
+#Moving Windows mit Laenge 1200 (Fuer jedes MovingWindow wird GARCH erneut geschaetzt)
+VaR95_pot_z=numeric(0)
+VaR99_pot_z=numeric(0)
+VaR995_pot_z=numeric(0)
+ES95_pot_garch=numeric(0)
+ES99_pot_garch=numeric(0)
+ES995_pot_garch=numeric(0)
+
+VaR95_pot_garch=numeric(0)
+VaR99_pot_garch=numeric(0)
+VaR995_pot_garch=numeric(0)
+ES95_pot_garch=numeric(0)
+ES99_pot_garch=numeric(0)
+ES995_pot_garch=numeric(0)
+
+for (i in (1:5626)){         #es gibt (6826-1200) Vorhersagen 
+  garchfitm=garchFit(formula=~arma(1,0)+garch(1,1),data=dax_log_xts[i:(1199+i)],cond.dist ="QMLE")
+  ztm=(dax_log_xts[i:(1199+i)]-garchfitm@fitted)/garchfitm@sigma.t
+  gpdpotgarch=fevd(as.vector(ztm), method = "MLE", type="GP", threshold=quantile(ztm,(1200-120)/1200))
+  VaR995_pot_z=quantile(ztm,0.9)+gpdpotgarch$results$par[1]/gpdpotgarch$results$par[2]*((1200*0.005/120)^(-gpdpotgarch$results$par[2])-1)
+  VaR99_pot_z=quantile(ztm,0.9)+gpdpotgarch$results$par[1]/gpdpotgarch$results$par[2]*((1200*0.01/120)^(-gpdpotgarch$results$par[2])-1)
+  VaR95_pot_z=quantile(ztm,0.9)+gpdpotgarch$results$par[1]/gpdpotgarch$results$par[2]*((1200*0.05/120)^(-gpdpotgarch$results$par[2])-1)
+ 
+  VaR995_pot_garch[i]=VaR995_pot_z*predict(garchfitm)[1,3]+predict(garchfitm)[1,1]#Mcneil S.6
+  VaR99_pot_garch[i]=VaR99_pot_z*predict(garchfitm)[1,3]+predict(garchfitm)[1,1]
+  VaR95_pot_garch[i]=VaR95_pot_z*predict(garchfitm)[1,3]+predict(garchfitm)[1,1]
+  #ES: Mcneil S.23
+  ES995_pot_garch[i]=predict(garchfitm)[1,1]+predict(garchfitm)[1,3]*VaR995_pot_z*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(ztm,0.9))/(VaR995_pot_z-VaR995_pot_z*gpdpotgarch$results$par[2]))
+  ES99_pot_garch[i]=predict(garchfitm)[1,1]+predict(garchfitm)[1,3]*VaR99_pot_z*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(ztm,0.9))/(VaR99_pot_z-VaR995_pot_z*gpdpotgarch$results$par[2]))
+  ES95_pot_garch[i]=predict(garchfitm)[1,1]+predict(garchfitm)[1,3]*VaR95_pot_z*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(ztm,0.9))/(VaR95_pot_z-VaR995_pot_z*gpdpotgarch$results$par[2]))
+   }  
+VaR995_pot_xts_garch=xts(VaR995_pot_garch,dax_log$date[1201:6826])
+VaR99_pot_xts_garch=xts(VaR99_pot_garch,dax_log$date[1201:6826])
+VaR95_pot_xts_garch=xts(VaR95_pot_garch,dax_log$date[1201:6826])
+
+
+plot(dax_log_xts[1201:6826])  
+lines(VaR995_pot_xts_garch,col="red")   
+lines(VaR99_pot_xts_garch,col="blue")    
+lines(VaR95_pot_xts_garch,col="green")   
+sum(VaR995_pot_xts_garch<zt[1201:6826]) #  33 Ueberschreitungen
+sum(VaR99_pot_xts_garch<zt[1201:6826]) #  51 Ueberschreitungen
+sum(VaR95_pot_xts_garch<zt[1201:6826]) #  243 Ueberschreitungen
+
+#ES berechnen  Mcneil 2000 S.23 Gleichung-(17) 
+ES995_pot_xts_garch=xts(garchfit3@fitted[1201:6826]+garchfit3@sigma.t[1201:6826]*VaR995_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(1199+i)],0.9))/(VaR995_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[1201:6826])
+ES99_pot_xts_garch=xts(garchfit3@fitted[1201:6826]+garchfit3@sigma.t[1201:6826]*VaR99_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(1199+i)],0.9))/(VaR99_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[1201:6826])
+ES95_pot_xts_garch=xts(garchfit3@fitted[1201:6826]+garchfit3@sigma.t[1201:6826]*VaR95_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(1199+i)],0.9))/(VaR95_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[1201:6826])
 
 
 
 
-
-
-
-#GARCH
-Acf(dax_log_xts)
-Pacf(dax_log_xts)
-adf.test(dax_log_xts)
-a1=arma(dax_log_xts[1:5271],order = c(1,1))  #mit 5271 gibt es Hessian negative-semidefinite
-a2=arma(dax_log_xts,order = c(1,2))
-a3=arma(dax_log_xts,order = c(2,1))
-a4=arma(dax_log_xts,order = c(2,2))
-a5=arma(dax_log_xts,order = c(2,3))
-a6=arma(dax_log_xts,order = c(3,2))
-
-garch11 <- ugarchspec(variance.model = list(model = "sGARCH", 
-                                         garchOrder = c(1, 1), 
-                                         submodel = NULL, 
-                                         external.regressors = NULL, 
-                                         variance.targeting = FALSE), 
-                   
-                   mean.model     = list(armaOrder = c(1, 1), 
-                                         external.regressors = NULL, 
-                                         distribution.model = "norm", 
-                                         start.pars = list(), 
-                                         fixed.pars = list()))
-
-garch_11 <- ugarchfit(spec = garch11, data = dax_log_xts, solver.control = list(trace=0))
-garch_11@fit$coef
-show(garch_11)
-garch_11@fit$sigma
-garch_11@fit$z
-str(garch_11)
-plot(dax_log_xts[1:250])
-lines(sigma(garch_11)[1:250],col="red")
 
 
