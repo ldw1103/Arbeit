@@ -28,9 +28,8 @@ t_nv1=ggplot(data=dax_log,aes(-logreturn))+ labs(x = "Verlust",y="Dichte")+coord
   geom_histogram(aes(y=..density..),fill="blue",bins=200)+
   labs(title="Histogramm des Log-Verlusts")+
   #geom_line(aes(y = ..density..), stat = 'density',lwd=1.1,col="green")+
-  #stat_function(fun = dnorm, n = 1000, args = list(mean = mean(-dax_log$logreturn), sd = sd(-dax_log$logreturn)),lwd=1.1) +
+  stat_function(fun = dnorm, n = 1000, args = list(mean = mean(-dax_log$logreturn), sd = sd(-dax_log$logreturn)),lwd=1.1) +
   stat_function(fun = function(x) (gamma((df+1)/2))/((gamma(df/2)*sqrt(pi*df)*s))*(1+(1/df)*((x-m)/s)^2)^(-(0.5*df+0.5)) ,lwd=1.1,col="red") +
-  stat_function(fun = dskt, n = 1000, args = list(mean = mean(-dax_log$logreturn), sd = sd(-dax_log$logreturn)),lwd=1.1)+
   theme(axis.text=element_text(size=20), axis.title.x = element_text(size=25),
         axis.title.y=element_text(size=25,face="bold"),title =element_text(size=20, face='bold'),)
 t_nv1
@@ -72,6 +71,12 @@ skt1
 print(skt,vp=vp1)
 print(skt1,vp=vp2)
 
+#Seite 18 3 EVT Dichte
 
-dsstd()
-
+evtd=ggplot(data.frame(x=c(-4, 4)), aes(x)) +labs(x = "x",y="Dichte")  +
+  stat_function(fun=devd,args = list(loc = 0, scale = 1, shape = 0, threshold = 0, log = F,type="GEV"),lwd=1.1)+
+  stat_function(fun=devd,args = list(loc = 1, scale = 1, shape = 1, threshold = 0, log = F,type="GEV"),lwd=1.1,col="red")+
+  stat_function(fun=devd,args = list(loc = -1, scale = 1, shape = -1, threshold = 0, log = F,type="GEV"),lwd=1.1,col="green")+
+  theme(axis.text=element_text(size=20), axis.title.x = element_text(size=25),
+        axis.title.y=element_text(size=25,face="bold"),title =element_text(size=20, face='bold'),)
+evtd
