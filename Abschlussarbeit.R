@@ -42,7 +42,7 @@ plot(dax_log_xts)
 #Block-Maxima-Methode
 
 #Jaehrliche Maxima als Beispiel
-jahrmax_bsp=apply.yearly(dax_log_xts,max) #die jaehliche groesste Verlust 
+jahrmax_bsp=apply.yearly(dax_log_xts,max) #die jaehrlichen groessten Verluste 
 length(jahrmax_bsp) #28 Jahre = 28 Beobachtungen
 plot(jahrmax_bsp)
 
@@ -165,60 +165,131 @@ return.level(fit_monatmax_lm, conf = 0.05, return.period= c(2,5,10,20,50))
 #(Das erste und das letzte sind manchmal zu klein!)
 ## Deshalb werden die Daten aequidistant unterteilt wie folgt:
 
-period.max(dax_log_xts,seq(from=1,to=6826,by=20))  #Monatlich z.B.
+period.max(dax_log_xts,seq(from=20,to=6826,by=20))  #Monatlich z.B.
 
 ###Goodness of Fit fuer GEV (Stephens 1977)
-bmm_monat_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=20))
-bmm_quartal_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=60))
-bmm_semester_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=120))
-bmm_jahr_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=240))
+#bmm_monat_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=20))
+#bmm_quartal_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=60))
+#bmm_semester_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=120))
+#bmm_jahr_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=240))
+
+
+
 ####Monat:
 fit_monat_st <- fevd(as.vector(bmm_monat_st), method = "MLE", type="GEV") 
 x_monat_st=sort(fit_monat_st$x)    ####von klein zu gross geordnet
 z_monat_st=pgev(x_monat_st,xi=fit_monat_st$results$par[3],mu=fit_monat_st$results$par[1],sigma=fit_monat_st$results$par[2])
 ##Stephens 1977 S.2
-statistic_W_1=0
-for (i in (1:length(z_monat_st))){
-  statistic_W_1=statistic_W_1+(z_monat_st[i]-(2*i-1)/(2*length(z_monat_st)))^2
+#statistic_W_1=0
+#for (i in (1:length(z_monat_st))){
+#  statistic_W_1=statistic_W_1+(z_monat_st[i]-(2*i-1)/(2*length(z_monat_st)))^2
+#}
+#statistic_W=statistic_W_1+1/(12*length(z_monat_st))
+#statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_monat_st)))  ###0.33>0.124 #H0 abgelehnt.
+###Goodness of Fit Shermann 1957
+monat_order=sort(as.numeric(bmm_monat_st))
+length(monat_order) #343
+pevd(monat_order[1],loc=fit_monat_st$results$par[1],scale = fit_monat_st$results$par[2],shape = fit_monat_st$results$par[3],type = "GEV")
+mm=rep(0,(length(monat_order)-1))
+for (i in(1:(length(monat_order)-1))){
+  mm[i]=abs(pevd(monat_order[i+1],loc=fit_monat_st$results$par[1],scale = fit_monat_st$results$par[2],shape = fit_monat_st$results$par[3],type = "GEV")-
+              pevd(monat_order[i],loc=fit_monat_st$results$par[1],scale = fit_monat_st$results$par[2],shape = fit_monat_st$results$par[3],type = "GEV")-
+              1/(1+length(monat_order)))
 }
-statistic_W=statistic_W_1+1/(12*length(z_monat_st))
-statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_monat_st)))  ###0.33>0.124 #H0 abgelehnt.
+omega=0.5*(sum(mm))+
+  0.5*(abs(pevd(monat_order[1],loc=fit_monat_st$results$par[1],scale = fit_monat_st$results$par[2],shape = fit_monat_st$results$par[3],type = "GEV")-0))+
+  0.5*(abs(1-pevd(monat_order[length(monat_order)],loc=fit_monat_st$results$par[1],scale = fit_monat_st$results$par[2],shape = fit_monat_st$results$par[3],type = "GEV")))
+omega #statistik = 0.3892
+mean_monat=(343/344)^(343+1)
+var_monat=(2*exp(1)-5)/(exp(2)*343)
+qnorm(0.95,mean=mean_monat,sd=sqrt(var_monat)) #Kritischer Wert= 0.3889 < 0.3892 H0 abgelehnt
 
 ###Quartal
 fit_quartal_st <- fevd(as.vector(bmm_quartal_st), method = "MLE", type="GEV") 
 x_quartal_st=sort(fit_quartal_st$x)    ####von klein zu gross geordnet
 z_quartal_st=pgev(x_quartal_st,xi=fit_quartal_st$results$par[3],mu=fit_quartal_st$results$par[1],sigma=fit_quartal_st$results$par[2])
 ##Stephens 1977 S.2
-statistic_W_1=0
-for (i in (1:length(z_quartal_st))){
-  statistic_W_1=statistic_W_1+(z_quartal_st[i]-(2*i-1)/(2*length(z_quartal_st)))^2
+#statistic_W_1=0
+#for (i in (1:length(z_quartal_st))){
+#  statistic_W_1=statistic_W_1+(z_quartal_st[i]-(2*i-1)/(2*length(z_quartal_st)))^2
+#}
+#statistic_W=statistic_W_1+1/(12*length(z_quartal_st))
+#statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_quartal_st)))  ###0.35>0.124 #H0 abgelehnt.
+quartal_order=sort(as.numeric(bmm_quartal_st))
+length(quartal_order) #115
+pevd(quartal_order[1],loc=fit_quartal_st$results$par[1],scale = fit_quartal_st$results$par[2],shape = fit_quartal_st$results$par[3],type = "GEV")
+mm=rep(0,(length(quartal_order)-1))
+for (i in(1:(length(quartal_order)-1))){
+  mm[i]=abs(pevd(quartal_order[i+1],loc=fit_quartal_st$results$par[1],scale = fit_quartal_st$results$par[2],shape = fit_quartal_st$results$par[3],type = "GEV")-
+              pevd(quartal_order[i],loc=fit_quartal_st$results$par[1],scale = fit_quartal_st$results$par[2],shape = fit_quartal_st$results$par[3],type = "GEV")-
+              1/(1+length(quartal_order)))
 }
-statistic_W=statistic_W_1+1/(12*length(z_quartal_st))
-statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_quartal_st)))  ###0.35>0.124 #H0 abgelehnt.
+omega=0.5*(sum(mm))+
+  0.5*(abs(pevd(quartal_order[1],loc=fit_quartal_st$results$par[1],scale = fit_quartal_st$results$par[2],shape = fit_quartal_st$results$par[3],type = "GEV")-0))+
+  0.5*(abs(1-pevd(quartal_order[length(quartal_order)],loc=fit_quartal_st$results$par[1],scale = fit_quartal_st$results$par[2],shape = fit_quartal_st$results$par[3],type = "GEV")))
+omega #statistik = 0.4088
+mean_quartal=(115/116)^(115+1)
+var_quartal=(2*exp(1)-5)/(exp(2)*115)
+qnorm(0.95,mean=mean_quartal,sd=sqrt(var_quartal)) #Kritischer Wert= 0.4035< 0.4088 H0 abgelehnt
+
 
 #Semester
 fit_semester_st <- fevd(as.vector(bmm_semester_st), method = "MLE", type="GEV") 
 x_semester_st=sort(fit_semester_st$x)    ####von klein zu gross geordnet
 z_semester_st=pgev(x_semester_st,xi=fit_semester_st$results$par[3],mu=fit_semester_st$results$par[1],sigma=fit_semester_st$results$par[2])
 ##Stephens 1977 S.2
-statistic_W_1=0
-for (i in (1:length(z_semester_st))){
-  statistic_W_1=statistic_W_1+(z_semester_st[i]-(2*i-1)/(2*length(z_semester_st)))^2
+#statistic_W_1=0
+#for (i in (1:length(z_semester_st))){
+#  statistic_W_1=statistic_W_1+(z_semester_st[i]-(2*i-1)/(2*length(z_semester_st)))^2
+#}
+#statistic_W=statistic_W_1+1/(12*length(z_semester_st))
+#statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_semester_st)))  ###0.086<0.124 #H0 nicht abgelehnt.
+semester_order=sort(as.numeric(bmm_semester_st))
+length(semester_order) #58
+pevd(semester_order[1],loc=fit_semester_st$results$par[1],scale = fit_semester_st$results$par[2],shape = fit_semester_st$results$par[3],type = "GEV")
+mm=rep(0,(length(semester_order)-1))
+for (i in(1:(length(semester_order)-1))){
+  mm[i]=abs(pevd(semester_order[i+1],loc=fit_semester_st$results$par[1],scale = fit_semester_st$results$par[2],shape = fit_semester_st$results$par[3],type = "GEV")-
+              pevd(semester_order[i],loc=fit_semester_st$results$par[1],scale = fit_semester_st$results$par[2],shape = fit_semester_st$results$par[3],type = "GEV")-
+              1/(1+length(semester_order)))
 }
-statistic_W=statistic_W_1+1/(12*length(z_semester_st))
-statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_semester_st)))  ###0.086<0.124 #H0 nicht abgelehnt.
+omega=0.5*(sum(mm))+
+  0.5*(abs(pevd(semester_order[1],loc=fit_semester_st$results$par[1],scale = fit_semester_st$results$par[2],shape = fit_semester_st$results$par[3],type = "GEV")-0))+
+  0.5*(abs(1-pevd(semester_order[length(semester_order)],loc=fit_semester_st$results$par[1],scale = fit_semester_st$results$par[2],shape = fit_semester_st$results$par[3],type = "GEV")))
+omega #statistik = 0.4124
+mean_semester=(58/59)^(58+1)
+var_semester=(2*exp(1)-5)/(exp(2)*58)
+qnorm(0.95,mean=mean_semester,sd=sqrt(var_semester)) #Kritischer Wert= 0.4172>0.4124 H0 nicht ab
+
 
 ##Jahr
 fit_jahr_st <- fevd(as.vector(bmm_jahr_st), method = "MLE", type="GEV") 
 x_jahr_st=sort(fit_jahr_st$x)    ####von klein zu gross geordnet
 z_jahr_st=pgev(x_jahr_st,xi=fit_jahr_st$results$par[3],mu=fit_jahr_st$results$par[1],sigma=fit_jahr_st$results$par[2])
 ##Stephens 1977 S.2
-statistic_W_1=0
-for (i in (1:length(z_jahr_st))){
-  statistic_W_1=statistic_W_1+(z_jahr_st[i]-(2*i-1)/(2*length(z_jahr_st)))^2
+#statistic_W_1=0
+#for (i in (1:length(z_jahr_st))){
+#  statistic_W_1=statistic_W_1+(z_jahr_st[i]-(2*i-1)/(2*length(z_jahr_st)))^2
+#}
+#statistic_W=statistic_W_1+1/(12*length(z_jahr_st))
+#statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_jahr_st)))  ###0.04<0.124 #H0 nicht abgelehnt.
+jahr_order=sort(as.numeric(bmm_jahr_st))
+length(jahr_order) #30
+pevd(jahr_order[1],loc=fit_jahr_st$results$par[1],scale = fit_jahr_st$results$par[2],shape = fit_jahr_st$results$par[3],type = "GEV")
+mm=rep(0,(length(jahr_order)-1))
+for (i in(1:(length(jahr_order)-1))){
+  mm[i]=abs(pevd(jahr_order[i+1],loc=fit_jahr_st$results$par[1],scale = fit_jahr_st$results$par[2],shape = fit_jahr_st$results$par[3],type = "GEV")-
+              pevd(jahr_order[i],loc=fit_jahr_st$results$par[1],scale = fit_jahr_st$results$par[2],shape = fit_jahr_st$results$par[3],type = "GEV")-
+              1/(1+length(jahr_order)))
 }
-statistic_W=statistic_W_1+1/(12*length(z_jahr_st))
-statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_jahr_st)))  ###0.04<0.124 #H0 nicht abgelehnt.
+omega=0.5*(sum(mm))+
+  0.5*(abs(pevd(jahr_order[1],loc=fit_jahr_st$results$par[1],scale = fit_jahr_st$results$par[2],shape = fit_jahr_st$results$par[3],type = "GEV")-0))+
+  0.5*(abs(1-pevd(jahr_order[length(jahr_order)],loc=fit_jahr_st$results$par[1],scale = fit_jahr_st$results$par[2],shape = fit_jahr_st$results$par[3],type = "GEV")))
+omega #statistik = 0.36966
+mean_jahr=(30/31)^(30+1)
+var_jahr=(2*exp(1)-5)/(exp(2)*30)
+qnorm(0.95,mean=mean_jahr,sd=sqrt(var_jahr)) #Kritischer Wert= 0.4348 > 0.36966 H0 nicht ab.
+
 
 ####semesterliche und jaehrliche bestehen bei dem Test. Deshalb wird n = 120 gewaehlt! (mehr Beobachtungen als die jaehlichen)  
 
@@ -699,21 +770,26 @@ VaR99_pot_xts_garch=xts(VaR99_pot_garch,dax_log$date[2401:6826])
 VaR95_pot_xts_garch=xts(VaR95_pot_garch,dax_log$date[2401:6826])
 
 
-plot(dax_log_xts[2401:6826])  
+plot(dax_log_xts[2401:6826],main="VaR")  
 lines(VaR995_pot_xts_garch,col="red")   
 lines(VaR99_pot_xts_garch,col="blue")    
 lines(VaR95_pot_xts_garch,col="green")   
+legend("bottomleft",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 sum(VaR995_pot_xts_garch<zt[2401:6826]) #  28 Ueberschreitungen
 sum(VaR99_pot_xts_garch<zt[2401:6826]) #  43 Ueberschreitungen
 sum(VaR95_pot_xts_garch<zt[2401:6826]) #  199 Ueberschreitungen
 
 
 #ES berechnen  Mcneil 2000 S.23 Gleichung-(17) 
+
 ES995_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR995_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR995_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
 ES99_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR99_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR99_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
 ES95_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR95_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR95_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
-
-
+plot(dax_log_xts[2401:6826],main="ES")  
+lines(ES995_pot_xts_garch,col="red")   
+lines(ES99_pot_xts_garch,col="blue")    
+lines(ES95_pot_xts_garch,col="green") 
+legend("bottomleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
 
 
