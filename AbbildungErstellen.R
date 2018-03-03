@@ -1,9 +1,16 @@
 library(ggplot2)
 library(MASS)
 library(grid)#Lokation von ggplots2
-library(fGarch)#Skewed-t-Verteilung
-library(skewt)#Skewed-t-Verteilung
+library(fGarch)#Skewed-t-Verteilung und GARCH
 library(reshape2)
+library(extRemes) #Extremwerttheorie
+library(xts)      #eXtensible Time Series
+library(tseries)  #Zeitreihe
+library(MASS)
+library(rugarch)  #univariate GARCH
+library(skewt)    #Skewed-t-Verteilung
+library(forecast)
+library(evir)   #auch Extremwerttheorie
 
 #Seite 12. Studentsche t-Verteilung und NV-Verteilung
 tfitt=fitdistr(-dax_log$logreturn,"t")
@@ -100,4 +107,35 @@ ggplot(gg, aes(x=x, y=value, color=variable))+
   geom_line(lwd=1.1)+labs(x = "x",y="Dichte")+
   theme(axis.text=element_text(size=20), axis.title.x = element_text(size=25),
         axis.title.y=element_text(size=25,face="bold"),title =element_text(size=20, face='bold'),legend.text=element_text(size=17),legend.title=element_blank())
+
+###GPD###
+
+
+x  <- seq(0.01, 5, 0.01) 
+gpd0 <- devd(x,loc = 0, scale = 1, shape = 0, threshold = 0, log = F,type="GP")
+gpd1 <- devd(x,loc = 0, scale = 1, shape = 0.5, threshold = 0, log = F,type="GP")
+gpd2 <- devd(x,loc = 0, scale = 1, shape = -0.5, threshold = 0, log = F,type="GP")
+
+gpd012 <- data.frame(x,gpd0,gpd1,gpd2)
+
+ggpd <- melt(gpd012,id="x")
+gpd11=ggplot(ggpd, aes(x=x, y=value, color=factor(variable,labels=c("xi=0","xi=0.5","xi=-0.5"))))+
+  geom_line(lwd=1.1)+labs(x = "y",y="g(y)")+
+  theme(axis.text=element_text(size=20), axis.title.x = element_text(size=25),
+        axis.title.y=element_text(size=25,face="bold"),title =element_text(size=20, face='bold'),legend.text=element_text(size=17),legend.title=element_blank())
+
+x  <- seq(0, 5, 0.01) 
+pgpd0 <- pevd(x,loc = 0, scale = 1, shape = 0, threshold = 0, log = F,type="GP")
+pgpd1 <- pevd(x,loc = 0, scale = 1, shape = 0.5, threshold = 0, log = F,type="GP")
+pgpd2 <- pevd(x,loc = 0, scale = 1, shape = -0.5, threshold = 0, log = F,type="GP")
+
+pgpd012 <- data.frame(x,pgpd0,pgpd1,pgpd2)
+
+pggpd <- melt(pgpd012,id="x")
+gpd22=ggplot(pggpd, aes(x=x, y=value, color=factor(variable,labels=c("xi=0","xi=0.5","xi=-0.5"))))+
+  geom_line(lwd=1.1)+labs(x = "y",y="G(y)")+
+  theme(axis.text=element_text(size=20), axis.title.x = element_text(size=25),
+        axis.title.y=element_text(size=25,face="bold"),title =element_text(size=20, face='bold'),legend.text=element_text(size=17),legend.title=element_blank())
   
+print(gpd11,vp=vp1)
+print(gpd22,vp=vp2)
