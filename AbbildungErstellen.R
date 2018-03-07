@@ -144,3 +144,7 @@ print(gpd22,vp=vp2)
 mrlplot(dax_log_xts, main="Sample Mean Residual Life Plot",)    #u ist vielleicht in (0,4), aber nicht informative
 meplot(dax_log_xts,xlim=c(0,5),ylim=c(1,1.5),type="l",main="Sample Mean Residual Life Plot")  #u ist vielleicht 3.5. Nach 3.5 ist linear. Ist (6826-100)/6826=0.9854Quantil
 
+#Hill-Plot
+par(mfrow=c(1,2))
+hill(dax_log_xts)
+hill(dax_log_xts,xlim=c(60,340)) 
