@@ -491,7 +491,7 @@ sum(VaR95_bmm_xts<dax_log_xts[2401:6826]) #  231 Ueberschreitungen
 
 ###############POT################
 # Mean Residual Life Plot: (Mean Excess)
-mrlplot(dax_log_xts, main="Mean Residual Life Plot")    #u ist vielleicht in (0,4), aber nicht informative
+mrlplot(dax_log_xts, main="Mean Residual Life Plot",)    #u ist vielleicht in (0,4)
 meplot(dax_log_xts,xlim=c(0,5),ylim=c(1,1.5),type="l")  #u ist vielleicht 3.5. Nach 3.5 ist linear. Ist (6826-100)/6826=0.9854Quantil
 
 
@@ -499,7 +499,8 @@ meplot(dax_log_xts,xlim=c(0,5),ylim=c(1,1.5),type="l")  #u ist vielleicht 3.5. N
 
 #####Aber bei Hill-Schaetzer: shape-Parameter muss >0! (Mcneil 2000 Seite.17) Kann noch als Instrument zur Threshold-Wahl?
 n=6826
-evir::hill(dax_log_xts,xlim=c(15,300))  #Hill Plot.Ab 100 ist es linear  k=ungefaehr 100, y-Achse = ungefaehr 3.2.
+hill(dax_log_xts)
+evir::hill(dax_log_xts,xlim=c(60,340))  #Hill Plot.Ab 100 ist es linear  k=ungefaehr 100, y-Achse = ungefaehr 3.2.
 quantile(dax_log_xts,(6826-100)/6826)  # Threshold wird als 3.50 gewaehlt.
 
 
@@ -507,13 +508,13 @@ quantile(dax_log_xts,(6826-100)/6826)  # Threshold wird als 3.50 gewaehlt.
 #dax_log_order[100]#u = 3.50
 
 taudach=numeric(0)
-for (i in (15:600)){
+for (i in (60:340)){
   taudach[i]=1/i*sum(log(dax_log_order[1:i])-log(dax_log_order[i]))
 }
-plot(taudach,type="l")    #identisch zur evir::hill. Ab ungefaehr 100 ise es linear
+plot(taudach^(-1),type="l")    #identisch zur evir::hill. Ab ungefaehr 100 ise es linear
 
 # mit unterschiedlichen Grenzwerten
-threshrange.plot(dax_log_xts, r = c(0, 5), nint = 16)
+threshrange.plot(dax_log_xts, r = c(0, 5), nint = 16,type="GP")
 # ismev Implementation ist schneller:
 ismev::gpd.fitrange(dax_log_xts, umin=0, umax=5, nint = 16) 
 
@@ -580,8 +581,8 @@ sum(VaR95_pot_xts<dax_log_xts[2401:6826]) #  222 Ueberschreitungen
 
 ######Danielsson2001 Threshold mit Hilfe von Subsample-Bootstrap
 #install.packages("tea")
-library(tea) # Package zum Danielssons Bootstrap
-danielsson(dax_log$logreturn,B=100) #Threshold= 4.20. aber das einzelne Verfahren kostet mehr als 20 Minuten
+#library(tea) # Package zum Danielssons Bootstrap
+#danielsson(dax_log$logreturn,B=100) #Threshold= 4.20. aber das einzelne Verfahren kostet mehr als 20 Minuten
 
 #eye(dax_log$logreturn)  #error
 
@@ -667,7 +668,7 @@ meplot(zt,type="l")  #Threshold = ungefaehr 2.5. Ab 2.5 ist es linear
 
 
 #Hill-Plot
-evir::hill(zt,xlim=c(15,500))  #Hill Plot  k=ungefaehr 70, y = ungefaehr 5.
+evir::hill(zt,xlim=c(15,340))  #Hill Plot  k=ungefaehr 70, y = ungefaehr 5.
 quantile(zt,(6826-70)/6826)  # Threshold wird als 2.54 gewaehlt.
 
 
