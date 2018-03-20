@@ -28,7 +28,7 @@ names(dax_log)[names(dax_log)=="dax.Date..1."] <- "date"  #Name verkuerzen
 dax_log$date=as.Date(dax_log$date)                      #Datentyp von Datum transformieren
 dax_log_xts=xts(dax_log$logreturn,dax_log$date)         #xts-Format
 head(dax_log_xts)
-plot(dax_log_xts)                                      #Plot von Log_Return, aber warum chinesisch?
+plot(dax_log_xts)                                      #Plot von Log_Return
 length(dax_log_xts)#Laenge=6826
 #plot(dax_log$date,dax_log$logreturn,type = "l")
 hist(dax_log_xts,breaks=100)                       #Hist von Log-Return
@@ -38,6 +38,14 @@ adf.test(dax_log_xts)   #ADF-Test: p=0.01, deshalb ist es stationaer.
 
 dax_log_xts=-dax_log_xts  # Vorzeichen umkehren, Verlust statt Rendite. --Negative Returns
 plot(dax_log_xts)
+
+mean(dax_log_xts)
+median(dax_log_xts)
+min(dax_log_xts)
+max(dax_log_xts)
+sd(dax_log_xts)
+skewness(dax_log_xts)
+kurtosis(dax_log_xts)
 
 #Block-Maxima-Methode
 
@@ -516,7 +524,7 @@ plot(taudach^(-1),type="l")    #identisch zur evir::hill. Ab ungefaehr 100 ise e
 # mit unterschiedlichen Grenzwerten
 threshrange.plot(dax_log_xts, r = c(0, 5), nint = 16,type="GP")
 # ismev Implementation ist schneller:
-ismev::gpd.fitrange(dax_log_xts, umin=0, umax=5, nint = 16) 
+ismev::gpd.fitrange(dax_log_xts, umin=0, umax=5, nint = 50) 
 
 
 # MLE mit extRemes

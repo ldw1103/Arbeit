@@ -148,3 +148,12 @@ meplot(dax_log_xts,xlim=c(0,5),ylim=c(1,1.5),type="l",main="Sample Mean Residual
 par(mfrow=c(1,2))
 hill(dax_log_xts)
 hill(dax_log_xts,xlim=c(60,340)) 
+
+
+#Plot der Zeitreihe
+plot.xts(dax_xts,main="Schlusskurs des DAX Index")
+plot(dax_log_xts,main="Log-Verlust")
+
+###QQplot
+stats::qqnorm(dax_log_xts);qqline(dax_log_xts)
+
