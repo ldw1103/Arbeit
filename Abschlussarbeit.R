@@ -176,10 +176,10 @@ return.level(fit_monatmax_lm, conf = 0.05, return.period= c(2,5,10,20,50))
 period.max(dax_log_xts,seq(from=20,to=6826,by=20))  #Monatlich z.B.
 
 ###Goodness of Fit fuer GEV (Stephens 1977)
-#bmm_monat_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=20))
-#bmm_quartal_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=60))
-#bmm_semester_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=120))
-#bmm_jahr_st=period.max(dax_log$logreturn,seq(from=1,to=6826,by=240))
+bmm_monat_st=period.max(dax_log_xts[1:6720],seq(from=20,to=6720,by=20))
+bmm_quartal_st=period.max(dax_log_xts[1:6720],seq(from=60,to=6720,by=60))
+bmm_semester_st=period.max(dax_log_xts[1:6720],seq(from=120,to=6720,by=120))
+bmm_jahr_st=period.max(dax_log_xts[1:6720],seq(from=240,to=6720,by=240))
 
 
 
@@ -187,16 +187,10 @@ period.max(dax_log_xts,seq(from=20,to=6826,by=20))  #Monatlich z.B.
 fit_monat_st <- fevd(as.vector(bmm_monat_st), method = "MLE", type="GEV") 
 x_monat_st=sort(fit_monat_st$x)    ####von klein zu gross geordnet
 z_monat_st=pgev(x_monat_st,xi=fit_monat_st$results$par[3],mu=fit_monat_st$results$par[1],sigma=fit_monat_st$results$par[2])
-##Stephens 1977 S.2
-#statistic_W_1=0
-#for (i in (1:length(z_monat_st))){
-#  statistic_W_1=statistic_W_1+(z_monat_st[i]-(2*i-1)/(2*length(z_monat_st)))^2
-#}
-#statistic_W=statistic_W_1+1/(12*length(z_monat_st))
-#statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_monat_st)))  ###0.33>0.124 #H0 abgelehnt.
+
 ###Goodness of Fit Shermann 1957
 monat_order=sort(as.numeric(bmm_monat_st))
-length(monat_order) #343
+length(monat_order) #336
 pevd(monat_order[1],loc=fit_monat_st$results$par[1],scale = fit_monat_st$results$par[2],shape = fit_monat_st$results$par[3],type = "GEV")
 mm=rep(0,(length(monat_order)-1))
 for (i in(1:(length(monat_order)-1))){
@@ -207,24 +201,24 @@ for (i in(1:(length(monat_order)-1))){
 omega=0.5*(sum(mm))+
   0.5*(abs(pevd(monat_order[1],loc=fit_monat_st$results$par[1],scale = fit_monat_st$results$par[2],shape = fit_monat_st$results$par[3],type = "GEV")-0))+
   0.5*(abs(1-pevd(monat_order[length(monat_order)],loc=fit_monat_st$results$par[1],scale = fit_monat_st$results$par[2],shape = fit_monat_st$results$par[3],type = "GEV")))
-omega #statistik = 0.3892
-mean_monat=(343/344)^(343+1)
-var_monat=(2*exp(1)-5)/(exp(2)*343)
-qnorm(0.95,mean=mean_monat,sd=sqrt(var_monat)) #Kritischer Wert= 0.3889 < 0.3892 H0 abgelehnt
+omega #statistik = 0.3676
+mean_monat=(336/337)^(336+1)
+var_monat=(2*exp(1)-5)/(exp(2)*336)
+qnorm(0.95,mean=mean_monat,sd=sqrt(var_monat)) #Kritischer Wert= 0.3891 > 0.3676 H0 nicht abgelehnt
+pnorm(omega,mean=mean_monat,sd=sqrt(var_monat)) #p= 0.51
+
+#omega1 oder 2
+omega1=1/sqrt(var_monat)*(omega-mean_monat)
+omega2=sqrt(exp(2)/(2*exp(1)-1)*336)*(omega-exp(-1))
+omega1 #0.020
+omega2 #0.00
 
 ###Quartal
 fit_quartal_st <- fevd(as.vector(bmm_quartal_st), method = "MLE", type="GEV") 
 x_quartal_st=sort(fit_quartal_st$x)    ####von klein zu gross geordnet
 z_quartal_st=pgev(x_quartal_st,xi=fit_quartal_st$results$par[3],mu=fit_quartal_st$results$par[1],sigma=fit_quartal_st$results$par[2])
-##Stephens 1977 S.2
-#statistic_W_1=0
-#for (i in (1:length(z_quartal_st))){
-#  statistic_W_1=statistic_W_1+(z_quartal_st[i]-(2*i-1)/(2*length(z_quartal_st)))^2
-#}
-#statistic_W=statistic_W_1+1/(12*length(z_quartal_st))
-#statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_quartal_st)))  ###0.35>0.124 #H0 abgelehnt.
 quartal_order=sort(as.numeric(bmm_quartal_st))
-length(quartal_order) #115
+length(quartal_order) #112
 pevd(quartal_order[1],loc=fit_quartal_st$results$par[1],scale = fit_quartal_st$results$par[2],shape = fit_quartal_st$results$par[3],type = "GEV")
 mm=rep(0,(length(quartal_order)-1))
 for (i in(1:(length(quartal_order)-1))){
@@ -235,25 +229,23 @@ for (i in(1:(length(quartal_order)-1))){
 omega=0.5*(sum(mm))+
   0.5*(abs(pevd(quartal_order[1],loc=fit_quartal_st$results$par[1],scale = fit_quartal_st$results$par[2],shape = fit_quartal_st$results$par[3],type = "GEV")-0))+
   0.5*(abs(1-pevd(quartal_order[length(quartal_order)],loc=fit_quartal_st$results$par[1],scale = fit_quartal_st$results$par[2],shape = fit_quartal_st$results$par[3],type = "GEV")))
-omega #statistik = 0.4088
-mean_quartal=(115/116)^(115+1)
-var_quartal=(2*exp(1)-5)/(exp(2)*115)
-qnorm(0.95,mean=mean_quartal,sd=sqrt(var_quartal)) #Kritischer Wert= 0.4035< 0.4088 H0 abgelehnt
-
+omega #statistik = 0.3784
+mean_quartal=(112/113)^(112+1)
+var_quartal=(2*exp(1)-5)/(exp(2)*112)
+qnorm(0.95,mean=mean_quartal,sd=sqrt(var_quartal)) #Kritischer Wert= 0.4040> 0.3784 H0 nicht abgelehnt
+pnorm(0.3784,mean=mean_quartal,sd=sqrt(var_quartal))  #p=0.70
+#omega1 oder 2
+omega1=1/sqrt(var_quartal)*(omega-mean_quartal)
+omega2=sqrt(exp(2)/(2*exp(1)-1)*112)*(omega-exp(-1))
+omega1 #0.53
+omega2 #0.14
 
 #Semester
 fit_semester_st <- fevd(as.vector(bmm_semester_st), method = "MLE", type="GEV") 
 x_semester_st=sort(fit_semester_st$x)    ####von klein zu gross geordnet
 z_semester_st=pgev(x_semester_st,xi=fit_semester_st$results$par[3],mu=fit_semester_st$results$par[1],sigma=fit_semester_st$results$par[2])
-##Stephens 1977 S.2
-#statistic_W_1=0
-#for (i in (1:length(z_semester_st))){
-#  statistic_W_1=statistic_W_1+(z_semester_st[i]-(2*i-1)/(2*length(z_semester_st)))^2
-#}
-#statistic_W=statistic_W_1+1/(12*length(z_semester_st))
-#statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_semester_st)))  ###0.086<0.124 #H0 nicht abgelehnt.
 semester_order=sort(as.numeric(bmm_semester_st))
-length(semester_order) #58
+length(semester_order) #56
 pevd(semester_order[1],loc=fit_semester_st$results$par[1],scale = fit_semester_st$results$par[2],shape = fit_semester_st$results$par[3],type = "GEV")
 mm=rep(0,(length(semester_order)-1))
 for (i in(1:(length(semester_order)-1))){
@@ -264,25 +256,23 @@ for (i in(1:(length(semester_order)-1))){
 omega=0.5*(sum(mm))+
   0.5*(abs(pevd(semester_order[1],loc=fit_semester_st$results$par[1],scale = fit_semester_st$results$par[2],shape = fit_semester_st$results$par[3],type = "GEV")-0))+
   0.5*(abs(1-pevd(semester_order[length(semester_order)],loc=fit_semester_st$results$par[1],scale = fit_semester_st$results$par[2],shape = fit_semester_st$results$par[3],type = "GEV")))
-omega #statistik = 0.4124
-mean_semester=(58/59)^(58+1)
-var_semester=(2*exp(1)-5)/(exp(2)*58)
-qnorm(0.95,mean=mean_semester,sd=sqrt(var_semester)) #Kritischer Wert= 0.4172>0.4124 H0 nicht ab
-
+omega #statistik = 0.3850
+mean_semester=(56/57)^(56+1)
+var_semester=(2*exp(1)-5)/(exp(2)*56)
+qnorm(0.95,mean=mean_semester,sd=sqrt(var_semester)) #Kritischer Wert= 4180>0.3850 H0 nicht ab
+pnorm(0.3850,mean=mean_semester,sd=sqrt(var_semester)) #0.7347
+#omega1 oder 2
+omega1=1/sqrt(var_semester)*(omega-mean_semester)
+omega2=sqrt(exp(2)/(2*exp(1)-1)*56)*(omega-exp(-1))
+omega1  #0.63
+omega2  #0.16
 
 ##Jahr
 fit_jahr_st <- fevd(as.vector(bmm_jahr_st), method = "MLE", type="GEV") 
 x_jahr_st=sort(fit_jahr_st$x)    ####von klein zu gross geordnet
 z_jahr_st=pgev(x_jahr_st,xi=fit_jahr_st$results$par[3],mu=fit_jahr_st$results$par[1],sigma=fit_jahr_st$results$par[2])
-##Stephens 1977 S.2
-#statistic_W_1=0
-#for (i in (1:length(z_jahr_st))){
-#  statistic_W_1=statistic_W_1+(z_jahr_st[i]-(2*i-1)/(2*length(z_jahr_st)))^2
-#}
-#statistic_W=statistic_W_1+1/(12*length(z_jahr_st))
-#statistic_W_m=statistic_W*(1+0.2/sqrt(length(z_jahr_st)))  ###0.04<0.124 #H0 nicht abgelehnt.
 jahr_order=sort(as.numeric(bmm_jahr_st))
-length(jahr_order) #30
+length(jahr_order) #28
 pevd(jahr_order[1],loc=fit_jahr_st$results$par[1],scale = fit_jahr_st$results$par[2],shape = fit_jahr_st$results$par[3],type = "GEV")
 mm=rep(0,(length(jahr_order)-1))
 for (i in(1:(length(jahr_order)-1))){
@@ -293,51 +283,56 @@ for (i in(1:(length(jahr_order)-1))){
 omega=0.5*(sum(mm))+
   0.5*(abs(pevd(jahr_order[1],loc=fit_jahr_st$results$par[1],scale = fit_jahr_st$results$par[2],shape = fit_jahr_st$results$par[3],type = "GEV")-0))+
   0.5*(abs(1-pevd(jahr_order[length(jahr_order)],loc=fit_jahr_st$results$par[1],scale = fit_jahr_st$results$par[2],shape = fit_jahr_st$results$par[3],type = "GEV")))
-omega #statistik = 0.36966
-mean_jahr=(30/31)^(30+1)
-var_jahr=(2*exp(1)-5)/(exp(2)*30)
-qnorm(0.95,mean=mean_jahr,sd=sqrt(var_jahr)) #Kritischer Wert= 0.4348 > 0.36966 H0 nicht ab.
+omega #statistik = 0.3244
+mean_jahr=(28/29)^(28+1)
+var_jahr=(2*exp(1)-5)/(exp(2)*28)
+qnorm(0.95,mean=mean_jahr,sd=sqrt(var_jahr)) #Kritischer Wert= 0.4370 > 0.3244 H0 nicht ab.
+pnorm(0.3244,mean=mean_jahr,sd=sqrt(var_jahr)) #0.21
+#omega1 oder 2
+omega1=1/sqrt(var_jahr)*(omega-mean_jahr)
+omega2=sqrt(exp(2)/(2*exp(1)-1)*28)*(omega-exp(-1))
+omega1 #-0.81
+omega2 #-0.30
+
+####Alle bestehen bei dem Test. Deshalb wird n = 20 gewaehlt! (mehr Beobachtungen als die jaehlichen)  
 
 
-####semesterliche und jaehrliche bestehen bei dem Test. Deshalb wird n = 120 gewaehlt! (mehr Beobachtungen als die jaehlichen)  
-
-
-# Moving Window (Groesse=2400) Zum Beispiel: das erste Fenster. Laenge=2400, damit durch 20,60,120,240 perfekt aufteilbar. 1200 zu klein fuer semesterlich.
+# Moving Window (Groesse=2400) Zum Beispiel: das erste Fenster. Laenge=2400, damit durch 20,60,120,240 perfekt teilbar.
 ts_bm_1=dax_log_xts[1:2400]   
-semestermax1=period.max(ts_bm_1,seq(from=120,to=2400,by=120))   #die groessete semesterliche Verlust
-semestermax1
-plot(semestermax1)
-fit_semester1 <- fevd(as.vector(semestermax1), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-fit_semester1_evir=gev(dax_log_xts,block = 120)
-plot(fit_semester1_evir)         #passt
-fit_semester1$results$par  #Parameter extrahieren 
+monatmax1=period.max(ts_bm_1,seq(from=20,to=2400,by=20))   #die groesseten monatlichen Verluste
+monatmax1
+plot(monatmax1)
+fit_monat1 <- fevd(as.vector(monatmax1), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
+fit_monat1_evir=gev(dax_log_xts,block = 20)
+plot(fit_monat1_evir)         #passt
+fit_monat1$results$par  #Parameter extrahieren 
 
-# VaRs und ESs berechnen. n=120 ist semesterlich
+# VaRs und ESs berechnen. n=120 ist monatlich
 VaR95_bmm=numeric(0)
 VaR99_bmm=numeric(0)
 VaR995_bmm=numeric(0)
 ES95_bmm=numeric(0)
 ES99_bmm=numeric(0)
 ES995_bmm=numeric(0)
-VaR120 = function(x){mu-sigma/tau*(1-(-log((1-x)^(120)))^(-tau))} #tau = xi = shape Parameter
+VaR20 = function(x){mu-sigma/tau*(1-(-log((1-x)^(20)))^(-tau))} #tau = xi = shape Parameter
 fit=numeric(0)
-#returnlevel = function(x,mu,sigma,xi){mu-sigma/xi*(1-(-log((1-x)^120))^(-xi))}
+#returnlevel = function(x,mu,sigma,xi){mu-sigma/xi*(1-(-log((1-x)^20))^(-xi))}
 for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen
-  semestermax=period.max(dax_log_xts[i:(i+2399)],seq(from=120,to=2400,by=120))    #die groessete semesterliche Verlust
-  fit <- fevd(as.vector(semestermax), method = "MLE", type="GEV")
+  monatmax=period.max(dax_log_xts[i:(i+2399)],seq(from=20,to=2400,by=20))    #die groesseten monatlichen Verluste
+  fit <- fevd(as.vector(monatmax), method = "MLE", type="GEV")
   #fit = gev(dax_log_xts[i:(i+2399)],block=120)
   #VaR995_bmm[i]=returnlevel(0.005,mu=fit$par.ests[3],sigma=fit$par.ests[2],xi=fit$par.ests[1])#rlevel.gev(fit,2.212322)[2]
    # VaR99_bmm[i]=returnlevel(0.01,mu=fit$par.ests[3],sigma=fit$par.ests[2],xi=fit$par.ests[1])#rlevel.gev(fit,1.427308)[2]
   #  VaR95_bmm[i]=returnlevel(0.05,mu=fit$par.ests[3],sigma=fit$par.ests[2],xi=fit$par.ests[1])#rlevel.gev(fit,1.002127)[2]
-  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.212322)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 120
-  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.427308)[1]  
-  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.002127)[1]
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 10.483332)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 20
+  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 5.491697)[1]  
+  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.558812)[1]
    mu=as.numeric(fit$results$par[1])
     sigma=as.numeric(fit$results$par[2])
     tau=as.numeric(fit$results$par[3])
-    ES995_bmm[i]=integrate(VaR120,lower=0,upper=0.005)$value*200
-    ES99_bmm[i]=integrate(VaR120,lower=0,upper=0.01)$value*100
-    ES95_bmm[i]=integrate(VaR120,lower=0,upper=0.05)$value*20
+    ES995_bmm[i]=integrate(VaR20,lower=0,upper=0.005)$value*200
+    ES99_bmm[i]=integrate(VaR20,lower=0,upper=0.01)$value*100
+    ES95_bmm[i]=integrate(VaR20,lower=0,upper=0.05)$value*20
     }
 
 VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[2401:6826])
@@ -360,9 +355,9 @@ lines(ES99_bmm_xts,col="blue")
 lines(ES95_bmm_xts,col="green")  
 legend("bottomleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
-sum(VaR995_bmm_xts<dax_log_xts[2401:6826]) # 82 Ueberschreitungen
-sum(VaR99_bmm_xts<dax_log_xts[2401:6826]) #  152 Ueberschreitungen
-sum(VaR95_bmm_xts<dax_log_xts[2401:6826]) #  549 Ueberschreitungen
+sum(VaR995_bmm_xts<dax_log_xts[2401:6826]) # 50 Ueberschreitungen
+sum(VaR99_bmm_xts<dax_log_xts[2401:6826]) #  83 Ueberschreitungen
+sum(VaR95_bmm_xts<dax_log_xts[2401:6826]) #  387 Ueberschreitungen
 
 
 # Mit Theta (Extremaler Index) Embrechts 1998 Chap8 P.S19
@@ -370,7 +365,7 @@ sum(VaR95_bmm_xts<dax_log_xts[2401:6826]) #  549 Ueberschreitungen
 #n=60,n=120. N_u=15,20,25,30,40,50,100,200
 
 #n=60  #Mcneil 1998 S.13,14  (m, n muessen gross genug sein)
-n60max=period.max(dax_log_xts,seq(from=60,to=6826,by=60))
+n60max=period.max(dax_log_xts[1:6720],seq(from=60,to=6720,by=60))
 fit_60 <- fevd(as.vector(n60max), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
 #plot(fit_60)
 #return.level(fit_60, conf = 0.05, return.period= c(2,5,10,20,50))
@@ -387,19 +382,19 @@ K50=sum(n60max>N50);K100=sum(n60max>N100);K200=sum(n60max>N200)
 K15;K20;K25;K30;K40;K50;K100;K200
 theta=function(n,m,Ku,Nu){(log(1-Ku/m)/log(1-Nu/6826))/n}
 #Theta berechnen
-theta15=theta(n=60,m=114,Ku=K15,Nu=15)
-theta20=theta(n=60,m=114,Ku=K20,Nu=20)
-theta25=theta(n=60,m=114,Ku=K25,Nu=25)
-theta30=theta(n=60,m=114,Ku=K30,Nu=30)
-theta40=theta(n=60,m=114,Ku=K40,Nu=40)
-theta50=theta(n=60,m=114,Ku=K50,Nu=50)
-theta100=theta(n=60,m=114,Ku=K100,Nu=100)
-theta200=theta(n=60,m=114,Ku=K200,Nu=200)
+theta15=theta(n=60,m=112,Ku=K15,Nu=15)
+theta20=theta(n=60,m=112,Ku=K20,Nu=20)
+theta25=theta(n=60,m=112,Ku=K25,Nu=25)
+theta30=theta(n=60,m=112,Ku=K30,Nu=30)
+theta40=theta(n=60,m=112,Ku=K40,Nu=40)
+theta50=theta(n=60,m=112,Ku=K50,Nu=50)
+theta100=theta(n=60,m=112,Ku=K100,Nu=100)
+theta200=theta(n=60,m=112,Ku=K200,Nu=200)
 theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta200))#Mcneil 1998 S.13,14
-theta_dach #0.475  
+theta_dach #0.48  
 
 #n=120
-n120max=period.max(dax_log_xts,seq(from=120,to=6826,by=120))
+n120max=period.max(dax_log_xts[1:6720],seq(from=120,to=6720,by=120))
 fit_120 <- fevd(as.vector(n120max), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
 #plot(fit_60)
 #return.level(fit_60, conf = 0.05, return.period= c(2,5,10,20,50))
@@ -416,27 +411,27 @@ K50=sum(n120max>N50);K100=sum(n120max>N100);K200=sum(n120max>N200)
 K15;K20;K25;K30;K40;K50;K100;K200
 theta=function(n,m,Ku,Nu){(log(1-Ku/m)/log(1-Nu/6826))/n}
 #Theta berechnen
-theta15=theta(n=120,m=57,Ku=K15,Nu=15)
-theta20=theta(n=120,m=57,Ku=K20,Nu=20)
-theta25=theta(n=120,m=57,Ku=K25,Nu=25)
-theta30=theta(n=120,m=57,Ku=K30,Nu=30)
-theta40=theta(n=120,m=57,Ku=K40,Nu=40)
-theta50=theta(n=120,m=57,Ku=K50,Nu=50)
-theta100=theta(n=120,m=57,Ku=K100,Nu=100)
-theta200=theta(n=120,m=57,Ku=K200,Nu=200)
+theta15=theta(n=120,m=56,Ku=K15,Nu=15)
+theta20=theta(n=120,m=56,Ku=K20,Nu=20)
+theta25=theta(n=120,m=56,Ku=K25,Nu=25)
+theta30=theta(n=120,m=56,Ku=K30,Nu=30)
+theta40=theta(n=120,m=56,Ku=K40,Nu=40)
+theta50=theta(n=120,m=56,Ku=K50,Nu=50)
+theta100=theta(n=120,m=56,Ku=K100,Nu=100)
+theta200=theta(n=120,m=56,Ku=K200,Nu=200)
 theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta200))#Mcneil 1998 S.13,14
-theta_dach #0.42  
+theta_dach #0.43  
 
 
 
 #Theta mir "evir" berechnen. n=60,120 ...
 
 #n=120 Longin 2000: Block = Semester
-n120max=period.max(dax_log_xts,seq(from=120,to=6826,by=120))
+#n120max=period.max(dax_log_xts[1:6720],seq(from=120,to=6720,by=120))
 #sum(n120max>quantile(dax_log_xts,0.95))
-sum(n120max>5) #Ueberschreiungen des Blocks = 13. Longin 2000: 5% als Threshold. Und Block = Semester
-index120=exindex(dax_log_xts,block=120)
-index120 #0.3190
+#sum(n120max>5) #Ueberschreitungen des Blocks = 13. Longin 2000: 5% als Threshold. Und Block = Semester
+#index120=exindex(dax_log_xts,block=120)
+#index120 #0.3190
 
 #sum(n60max>5)  #17  #Longin 2000: 5% als Threshold. 
 #index60=exindex(dax_log_xts,block=60) 
@@ -453,22 +448,22 @@ VaR995_bmm=numeric(0)
 ES95_bmm=numeric(0)
 ES99_bmm=numeric(0)
 ES995_bmm=numeric(0)
-n120max=numeric(0)
+n20max=numeric(0)
 fit=numeric(0)
-VaR120 = function(x){mu-sigma/tau*(1-(-log((1-x)^(120*0.3190)))^(-tau))} #tau = xi = shape Parameter
+VaR20 = function(x){mu-sigma/tau*(1-(-log((1-x)^(20*0.3190)))^(-tau))} #tau = xi = shape Parameter
 
 for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen
-  n120max=period.max(dax_log_xts[i:(i+2399)],seq(from=120,to=2400,by=120))    #die groessete quartalliche Verlust
-  fit <- fevd(as.vector(n120max), method = "MLE", type="GEV")
-  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 5.727568)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^(n*theta)=(1-1/k). Hier n = 120, Theta=0.3190
-  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 3.131228)[1]  
-  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.163285)[1] 
+  n20max=period.max(dax_log_xts[i:(i+2399)],seq(from=20,to=2400,by=20))    #die groessete quartalliche Verlust
+  fit <- fevd(as.vector(n20max), method = "MLE", type="GEV")
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 22.670380)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^(n*theta)=(1-1/k). Hier n = 20, Theta=0.45
+  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 11.562999)[1]  
+  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.704526)[1] 
   mu=as.numeric(fit$results$par[1])
   sigma=as.numeric(fit$results$par[2])
   tau=as.numeric(fit$results$par[3])
-  ES995_bmm[i]=integrate(VaR120,lower=0,upper=0.005)$value*200
-  ES99_bmm[i]=integrate(VaR120,lower=0,upper=0.01)$value*100
-  ES95_bmm[i]=integrate(VaR120,lower=0,upper=0.05)$value*20
+  ES995_bmm[i]=integrate(VaR20,lower=0,upper=0.005)$value*200
+  ES99_bmm[i]=integrate(VaR20,lower=0,upper=0.01)$value*100
+  ES95_bmm[i]=integrate(VaR20,lower=0,upper=0.05)$value*20
 }
 
 VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[2401:6826])
@@ -491,9 +486,9 @@ lines(ES99_bmm_xts,col="blue")
 lines(ES95_bmm_xts,col="green")  
 legend("bottomleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
-sum(VaR995_bmm_xts<dax_log_xts[2401:6826]) #  23 Ueberschreitungen
-sum(VaR99_bmm_xts<dax_log_xts[2401:6826]) #  57 Ueberschreitungen
-sum(VaR95_bmm_xts<dax_log_xts[2401:6826]) #  231 Ueberschreitungen
+sum(VaR995_bmm_xts<dax_log_xts[2401:6826]) #  18 Ueberschreitungen
+sum(VaR99_bmm_xts<dax_log_xts[2401:6826]) #  45 Ueberschreitungen
+sum(VaR95_bmm_xts<dax_log_xts[2401:6826]) #  186 Ueberschreitungen
 
 
 
