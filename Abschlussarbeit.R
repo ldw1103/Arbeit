@@ -107,7 +107,7 @@ plot(fit_monatmax_lm)
 plot(fit_monatmax) 
 return.level(fit_monatmax, conf = 0.05, return.period= c(2,5,10,20,50))
 return.level(fit_monatmax_lm, conf = 0.05, return.period= c(2,5,10,20,50))
-
+fit_monatmax$results$par
 
 # Monatlich Moving Window (Groesse=1000) Zum Beispiel: das erste Fenster
 #ts_bm_1=dax_log_xts[1:1000]
@@ -294,7 +294,8 @@ omega2=sqrt(exp(2)/(2*exp(1)-1)*28)*(omega-exp(-1))
 omega1 #-0.81
 omega2 #-0.30
 
-####Alle bestehen bei dem Test. Deshalb wird n = 20 gewaehlt! (mehr Beobachtungen als die jaehlichen)  
+####Alle bestehen bei dem Test. Deshalb wird n = 20 gewaehlt! (mehr Beobachtungen) 
+
 
 
 # Moving Window (Groesse=2400) Zum Beispiel: das erste Fenster. Laenge=2400, damit durch 20,60,120,240 perfekt teilbar.
@@ -307,7 +308,7 @@ fit_monat1_evir=gev(dax_log_xts,block = 20)
 plot(fit_monat1_evir)         #passt
 fit_monat1$results$par  #Parameter extrahieren 
 
-# VaRs und ESs berechnen. n=120 ist monatlich
+# VaRs und ESs berechnen. n=20 ist monatlich
 VaR95_bmm=numeric(0)
 VaR99_bmm=numeric(0)
 VaR995_bmm=numeric(0)
@@ -342,22 +343,95 @@ ES995_bmm_xts=xts(ES995_bmm,dax_log$date[2401:6826])
 ES99_bmm_xts=xts(ES99_bmm,dax_log$date[2401:6826])
 ES95_bmm_xts=xts(ES95_bmm,dax_log$date[2401:6826])
 
-plot(dax_log_xts[2401:6826],main="VaR")  
+plot(dax_log_xts[2401:6826],main="VaR",ylim=c(0,10))  
 lines(VaR995_bmm_xts,col="red")   
 lines(VaR99_bmm_xts,col="blue")    
 lines(VaR95_bmm_xts,col="green")   
-legend("bottomleft",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
 
-plot(dax_log_xts[2401:6826],main="ES")  
+plot(dax_log_xts[2401:6826],main="ES",,ylim=c(0,10))  
 lines(ES995_bmm_xts,col="red")   
 lines(ES99_bmm_xts,col="blue")    
 lines(ES95_bmm_xts,col="green")  
-legend("bottomleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
 sum(VaR995_bmm_xts<dax_log_xts[2401:6826]) # 50 Ueberschreitungen
 sum(VaR99_bmm_xts<dax_log_xts[2401:6826]) #  83 Ueberschreitungen
 sum(VaR95_bmm_xts<dax_log_xts[2401:6826]) #  387 Ueberschreitungen
+
+#U.C Test (Code aus dem Buch von Danielsson)
+uc_test = function(p,v){
+  return(2*log(((1-sum(v)/length(v))/(1-p))^(length(v)-sum(v))*((sum(v)/length(v))/p)^(sum(v))))
+}
+
+V995=(VaR995_bmm_xts<dax_log_xts[2401:6826])
+sum(V995)
+V99=(VaR99_bmm_xts<dax_log_xts[2401:6826])
+sum(V99)
+V95=(VaR95_bmm_xts<dax_log_xts[2401:6826])
+sum(V95)
+
+uc_test(p=0.005,v=V995) #25.94
+uc_test(p=0.01,v=V99)  #27.24
+uc_test(p=0.05,v=V95)  #107.8 #2*log(((1-387/4426)/0.95)^(4426-387)*((387/4426)/0.05)^(387))=107.8
+#p-wert
+1-pchisq(uc_test(p=0.005,v=V995),1)
+1-pchisq(uc_test(p=0.01,v=V99),1)
+1-pchisq(uc_test(p=0.05,v=V95),1)
+
+##Ind.Test  (Code aus dem Buch von Danielsson)
+ind_test = function(V){
+  J = matrix(ncol = 4,nrow = length(V))
+  for (i in 2:length(V)){
+    J[i,1] = V[i - 1] == 0 & V[i] == 0
+    J[i,2] = V[i - 1] ==0 & V[i] == 1
+    J[i,3] = V[i - 1] == 1 & V[i] == 0
+    J[i,4] = V[i - 1] == 1 & V[i] == 1
+  }
+  V_00 = sum(J[,1],na.rm = TRUE)
+  V_01 = sum(J[,2],na.rm = TRUE)
+  V_10 = sum(J[,3],na.rm = TRUE)
+  V_11 = sum(J[,4],na.rm = TRUE)
+  p_00 = V_00/(V_00 + V_01)
+  p_01 = V_01/(V_00 + V_01)
+  p_10 = V_10/(V_10 + V_11)
+  p_11 = V_11/(V_10 + V_11)
+  hat_p = (V_01 + V_11)/(V_00 + V_01 + V_10 + V_11)
+  #a = (1 - hat_p)^(V_00 + V_10)*(hat_p)^(V_01 + V_11)
+  #b = (p_00)^(V_00)*(p_01)^(V_01)*(p_10)^(V_10)* p_11^(V_11)
+  return(-2 * log(((1 - hat_p)/p_00)^(V_00)*((1 - hat_p)/p_10)^(V_10)*(hat_p/p_01)^(V_01)*(hat_p/p_11)^(V_11)))
+}
+
+ind_test(as.vector(V995))#5.39
+ind_test(as.vector(V99)) #14.36
+ind_test(as.vector(V95))  #41.34
+1-pchisq(ind_test(as.vector(V995)),1)#0.02
+1-pchisq(ind_test(as.vector(V99)),1)#0.00
+1-pchisq(ind_test(as.vector(V95)),1)#0.00
+
+##CC Test
+1-pchisq(uc_test(p=0.005,v=V995)+ind_test(as.vector(V995)),2)#0.00
+1-pchisq(uc_test(p=0.01,v=V99)+ind_test(as.vector(V99)),2)#0.00
+1-pchisq(uc_test(p=0.05,v=V95)+ind_test(as.vector(V95)),2)#0.00
+
+##ES Test (Mcneil 2000)
+ESTest(0.005,-dax_log_xts[2401:6826],ES=-ES995_bmm_xts,VaR=-VaR995_bmm_xts)
+ESTest(0.01,-dax_log_xts[2401:6826],ES=-ES99_bmm_xts,VaR=-VaR99_bmm_xts)
+ESTest(0.05,-dax_log_xts[2401:6826],ES=-ES95_bmm_xts,VaR=-VaR95_bmm_xts)
+
+####Acerbi Test 2
+Z2=function(p,ES,L,v){
+  s = matrix(ncol = 1,nrow = length(ES))
+  for (i in 1:length(ES)){
+  s[i]=L[i]*v[i]/(p*length(ES)*ES[i])
+  }
+  return(sum(s)-1)
+}
+Z2(p=0.005,ES=ES995_bmm_xts,L=dax_log_xts[2401:6826],v=V995)#1.04
+Z2(p=0.01,ES=ES99_bmm_xts,L=dax_log_xts[2401:6826],v=V99)#0.84
+Z2(p=0.05,ES=ES95_bmm_xts,L=dax_log_xts[2401:6826],v=V95)#0.77
+
 
 
 # Mit Theta (Extremaler Index) Embrechts 1998 Chap8 P.S19
@@ -477,14 +551,14 @@ plot(dax_log_xts[2401:6826],main="VaR")
 lines(VaR995_bmm_xts,col="red")   
 lines(VaR99_bmm_xts,col="blue")    
 lines(VaR95_bmm_xts,col="green")  
-legend("bottomleft",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
 
 plot(dax_log_xts[2401:6826],main="ES")  
 lines(ES995_bmm_xts,col="red")   
 lines(ES99_bmm_xts,col="blue")    
 lines(ES95_bmm_xts,col="green")  
-legend("bottomleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
 sum(VaR995_bmm_xts<dax_log_xts[2401:6826]) #  18 Ueberschreitungen
 sum(VaR99_bmm_xts<dax_log_xts[2401:6826]) #  45 Ueberschreitungen
