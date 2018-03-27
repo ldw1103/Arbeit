@@ -1,6 +1,10 @@
 # Packages 
 #install.packages("extRemes")
 #install.packages("xts")
+#install.packages("devtools")
+#devtools::install_github("BayerSe/esreg")
+#devtools::install_github("BayerSe/esback")
+#install.packages("esback")
 library(extRemes) #Extremwerttheorie
 library(xts)      #eXtensible Time Series
 library(tseries)  #Zeitreihe
@@ -10,6 +14,7 @@ library(skewt)    #Skewed-t-Verteilung
 library(fGarch)   #GARCH
 library(forecast)
 library(evir)   #auch Extremwerttheorie
+library(esback)  #ES backtesting
 
 #Daten Einlesen
 daten=read.csv("DAX.csv") #Quelle: finance.yahoo.com
@@ -418,7 +423,7 @@ ind_test(as.vector(V95))  #41.34
 ##ES Test (Mcneil 2000)
 ESTest(0.005,-dax_log_xts[2401:6826],ES=-ES995_bmm_xts,VaR=-VaR995_bmm_xts)
 ESTest(0.01,-dax_log_xts[2401:6826],ES=-ES99_bmm_xts,VaR=-VaR99_bmm_xts)
-ESTest(0.05,-dax_log_xts[2401:6826],ES=-ES95_bmm_xts,VaR=-VaR95_bmm_xts)
+ESTest(0.05,actual=-dax_log_xts[2401:6826],ES=-ES95_bmm_xts,VaR=-VaR95_bmm_xts)
 
 ####Acerbi Test 2
 Z2=function(p,ES,L,v){
@@ -431,6 +436,23 @@ Z2=function(p,ES,L,v){
 Z2(p=0.005,ES=ES995_bmm_xts,L=dax_log_xts[2401:6826],v=V995)#1.04
 Z2(p=0.01,ES=ES99_bmm_xts,L=dax_log_xts[2401:6826],v=V99)#0.84
 Z2(p=0.05,ES=ES95_bmm_xts,L=dax_log_xts[2401:6826],v=V95)#0.77
+
+#ESBACK
+esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES995_bmm_xts,alpha=0.005)
+esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES99_bmm_xts,alpha=0.01)
+esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES95_bmm_xts,alpha=0.05)
+
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_bmm_xts,alpha=0.005)
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_bmm_xts,alpha=0.01)
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_bmm_xts,alpha=0.05)
+
+esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES995_bmm_xts,e=-VaR995_bmm_xts,alpha=0.005)
+esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR99_bmm_xts,alpha=0.01)
+esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR95_bmm_xts,alpha=0.05)
+
+esback::er_backtest(-dax_log_xts[2401:6826],q=-ES995_bmm_xts,e=-VaR995_bmm_xts)
+esback::er_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR99_bmm_xts)
+esback::er_backtest(-dax_log_xts[2401:6826],q=-ES95_bmm_xts,e=-VaR95_bmm_xts)
 
 
 
