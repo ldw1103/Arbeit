@@ -421,9 +421,9 @@ ind_test(as.vector(V95))  #41.34
 1-pchisq(uc_test(p=0.05,v=V95)+ind_test(as.vector(V95)),2)#0.00
 
 ##ES Test (Mcneil 2000)
-ESTest(0.005,-dax_log_xts[2401:6826],ES=-ES995_bmm_xts,VaR=-VaR995_bmm_xts)
-ESTest(0.01,-dax_log_xts[2401:6826],ES=-ES99_bmm_xts,VaR=-VaR99_bmm_xts)
-ESTest(0.05,actual=-dax_log_xts[2401:6826],ES=-ES95_bmm_xts,VaR=-VaR95_bmm_xts)
+#ESTest(0.005,-dax_log_xts[2401:6826],ES=-ES995_bmm_xts,VaR=-VaR995_bmm_xts)
+#ESTest(0.01,-dax_log_xts[2401:6826],ES=-ES99_bmm_xts,VaR=-VaR99_bmm_xts)
+#ESTest(0.05,actual=-dax_log_xts[2401:6826],ES=-ES95_bmm_xts,VaR=-VaR95_bmm_xts)
 
 ####Acerbi Test 2
 Z2=function(p,ES,L,v){
@@ -438,21 +438,21 @@ Z2(p=0.01,ES=ES99_bmm_xts,L=dax_log_xts[2401:6826],v=V99)#0.84
 Z2(p=0.05,ES=ES95_bmm_xts,L=dax_log_xts[2401:6826],v=V95)#0.77
 
 #ESBACK
-esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES995_bmm_xts,alpha=0.005)
-esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES99_bmm_xts,alpha=0.01)
-esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES95_bmm_xts,alpha=0.05)
+#esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES995_bmm_xts,alpha=0.005)
+#esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES99_bmm_xts,alpha=0.01)
+#esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES95_bmm_xts,alpha=0.05)
 
-esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_bmm_xts,alpha=0.005)
-esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_bmm_xts,alpha=0.01)
-esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_bmm_xts,alpha=0.05)
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_bmm_xts,alpha=0.005)#0.12
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_bmm_xts,alpha=0.01)#0.00
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_bmm_xts,alpha=0.05)#0.00
 
-esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES995_bmm_xts,e=-VaR995_bmm_xts,alpha=0.005)
-esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR99_bmm_xts,alpha=0.01)
-esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR95_bmm_xts,alpha=0.05)
+#esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES995_bmm_xts,e=-VaR995_bmm_xts,alpha=0.005)
+#esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR99_bmm_xts,alpha=0.01)
+#esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR95_bmm_xts,alpha=0.05)
 
-esback::er_backtest(-dax_log_xts[2401:6826],q=-ES995_bmm_xts,e=-VaR995_bmm_xts)
-esback::er_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR99_bmm_xts)
-esback::er_backtest(-dax_log_xts[2401:6826],q=-ES95_bmm_xts,e=-VaR95_bmm_xts)
+#esback::er_backtest(-dax_log_xts[2401:6826],q=-ES995_bmm_xts,e=-VaR995_bmm_xts)
+#esback::er_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR99_bmm_xts)
+#esback::er_backtest(-dax_log_xts[2401:6826],q=-ES95_bmm_xts,e=-VaR95_bmm_xts)
 
 
 
@@ -465,18 +465,18 @@ n60max=period.max(dax_log_xts[1:6720],seq(from=60,to=6720,by=60))
 fit_60 <- fevd(as.vector(n60max), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
 #plot(fit_60)
 #return.level(fit_60, conf = 0.05, return.period= c(2,5,10,20,50))
-N15=quantile(dax_log_xts,(6826-15)/6826) #N_u=15
-N20=quantile(dax_log_xts,(6826-20)/6826) #N_u=20
-N25=quantile(dax_log_xts,(6826-25)/6826) #N_u=25
-N30=quantile(dax_log_xts,(6826-30)/6826) #N_u=30
-N40=quantile(dax_log_xts,(6826-40)/6826) #N_u=40
-N50=quantile(dax_log_xts,(6826-50)/6826) #N_u=50
-N100=quantile(dax_log_xts,(6826-100)/6826) #N_u=100
-N200=quantile(dax_log_xts,(6826-200)/6826) #N_u=200
+N15=quantile(dax_log_xts,(6720-15)/6720) #N_u=15
+N20=quantile(dax_log_xts,(6720-20)/6720) #N_u=20
+N25=quantile(dax_log_xts,(6720-25)/6720) #N_u=25
+N30=quantile(dax_log_xts,(6720-30)/6720) #N_u=30
+N40=quantile(dax_log_xts,(6720-40)/6720) #N_u=40
+N50=quantile(dax_log_xts,(6720-50)/6720) #N_u=50
+N100=quantile(dax_log_xts,(6720-100)/6720) #N_u=100
+N200=quantile(dax_log_xts,(6720-200)/6720) #N_u=200
 K15=sum(n60max>N15);K20=sum(n60max>N20);K25=sum(n60max>N25);K30=sum(n60max>N30);K40=sum(n60max>N40);
 K50=sum(n60max>N50);K100=sum(n60max>N100);K200=sum(n60max>N200)
 K15;K20;K25;K30;K40;K50;K100;K200
-theta=function(n,m,Ku,Nu){(log(1-Ku/m)/log(1-Nu/6826))/n}
+theta=function(n,m,Ku,Nu){(log(1-Ku/m)/log(1-Nu/6720))/n}
 #Theta berechnen
 theta15=theta(n=60,m=112,Ku=K15,Nu=15)
 theta20=theta(n=60,m=112,Ku=K20,Nu=20)
@@ -487,25 +487,25 @@ theta50=theta(n=60,m=112,Ku=K50,Nu=50)
 theta100=theta(n=60,m=112,Ku=K100,Nu=100)
 theta200=theta(n=60,m=112,Ku=K200,Nu=200)
 theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta200))#Mcneil 1998 S.13,14
-theta_dach #0.48  
+theta_dach #0.50  
 
 #n=120
 n120max=period.max(dax_log_xts[1:6720],seq(from=120,to=6720,by=120))
 fit_120 <- fevd(as.vector(n120max), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
 #plot(fit_60)
 #return.level(fit_60, conf = 0.05, return.period= c(2,5,10,20,50))
-N15=quantile(dax_log_xts,(6826-15)/6826) #N_u=15
-N20=quantile(dax_log_xts,(6826-20)/6826) #N_u=20
-N25=quantile(dax_log_xts,(6826-25)/6826) #N_u=25
-N30=quantile(dax_log_xts,(6826-30)/6826) #N_u=30
-N40=quantile(dax_log_xts,(6826-40)/6826) #N_u=40
-N50=quantile(dax_log_xts,(6826-50)/6826) #N_u=50
-N100=quantile(dax_log_xts,(6826-100)/6826) #N_u=100
-N200=quantile(dax_log_xts,(6826-200)/6826) #N_u=200
+N15=quantile(dax_log_xts,(6720-15)/6720) #N_u=15
+N20=quantile(dax_log_xts,(6720-20)/6720) #N_u=20
+N25=quantile(dax_log_xts,(6720-25)/6720) #N_u=25
+N30=quantile(dax_log_xts,(6720-30)/6720) #N_u=30
+N40=quantile(dax_log_xts,(6720-40)/6720) #N_u=40
+N50=quantile(dax_log_xts,(6720-50)/6720) #N_u=50
+N100=quantile(dax_log_xts,(6720-100)/6720) #N_u=100
+N200=quantile(dax_log_xts,(6720-200)/6720) #N_u=200
 K15=sum(n120max>N15);K20=sum(n120max>N20);K25=sum(n120max>N25);K30=sum(n120max>N30);K40=sum(n120max>N40);
 K50=sum(n120max>N50);K100=sum(n120max>N100);K200=sum(n120max>N200)
 K15;K20;K25;K30;K40;K50;K100;K200
-theta=function(n,m,Ku,Nu){(log(1-Ku/m)/log(1-Nu/6826))/n}
+theta=function(n,m,Ku,Nu){(log(1-Ku/m)/log(1-Nu/6720))/n}
 #Theta berechnen
 theta15=theta(n=120,m=56,Ku=K15,Nu=15)
 theta20=theta(n=120,m=56,Ku=K20,Nu=20)
@@ -516,7 +516,7 @@ theta50=theta(n=120,m=56,Ku=K50,Nu=50)
 theta100=theta(n=120,m=56,Ku=K100,Nu=100)
 theta200=theta(n=120,m=56,Ku=K200,Nu=200)
 theta_dach=mean(c(theta15,theta20,theta25,theta30,theta40,theta50,theta100,theta200))#Mcneil 1998 S.13,14
-theta_dach #0.43  
+theta_dach #0.44  
 
 
 
@@ -537,7 +537,7 @@ theta_dach #0.43
 
 
 #VaR
-#n=120, Moving Window = 2400. Theta= 0.3190
+#n=120, Moving Window = 2400. Theta= 0.50. (S.13 Mcneil1998)
 VaR95_bmm=numeric(0)
 VaR99_bmm=numeric(0)
 VaR995_bmm=numeric(0)
@@ -546,14 +546,14 @@ ES99_bmm=numeric(0)
 ES995_bmm=numeric(0)
 n20max=numeric(0)
 fit=numeric(0)
-VaR20 = function(x){mu-sigma/tau*(1-(-log((1-x)^(20*0.3190)))^(-tau))} #tau = xi = shape Parameter
+VaR20 = function(x){mu-sigma/tau*(1-(-log((1-x)^(20*0.50)))^(-tau))} #tau = xi = shape Parameter
 
 for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen
   n20max=period.max(dax_log_xts[i:(i+2399)],seq(from=20,to=2400,by=20))    #die groessete quartalliche Verlust
   fit <- fevd(as.vector(n20max), method = "MLE", type="GEV")
-  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 22.670380)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^(n*theta)=(1-1/k). Hier n = 20, Theta=0.45
-  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 11.562999)[1]  
-  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.704526)[1] 
+  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 20.454135)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^(n*theta)=(1-1/k). Hier n = 20, Theta=0.45
+  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 10.458290)[1]  
+  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.492131)[1] 
   mu=as.numeric(fit$results$par[1])
   sigma=as.numeric(fit$results$par[2])
   tau=as.numeric(fit$results$par[3])
@@ -569,22 +569,87 @@ ES995_bmm_xts=xts(ES995_bmm,dax_log$date[2401:6826])
 ES99_bmm_xts=xts(ES99_bmm,dax_log$date[2401:6826])
 ES95_bmm_xts=xts(ES95_bmm,dax_log$date[2401:6826])
 
-plot(dax_log_xts[2401:6826],main="VaR")  
+plot(dax_log_xts[2401:6826],main="VaR",ylim=c(0,10))  
 lines(VaR995_bmm_xts,col="red")   
 lines(VaR99_bmm_xts,col="blue")    
 lines(VaR95_bmm_xts,col="green")  
 legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
 
-plot(dax_log_xts[2401:6826],main="ES")  
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10))  
 lines(ES995_bmm_xts,col="red")   
 lines(ES99_bmm_xts,col="blue")    
 lines(ES95_bmm_xts,col="green")  
 legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
-sum(VaR995_bmm_xts<dax_log_xts[2401:6826]) #  18 Ueberschreitungen
-sum(VaR99_bmm_xts<dax_log_xts[2401:6826]) #  45 Ueberschreitungen
-sum(VaR95_bmm_xts<dax_log_xts[2401:6826]) #  186 Ueberschreitungen
+sum(VaR995_bmm_xts<dax_log_xts[2401:6826]) #  20 Ueberschreitungen
+sum(VaR99_bmm_xts<dax_log_xts[2401:6826]) #  50 Ueberschreitungen
+sum(VaR95_bmm_xts<dax_log_xts[2401:6826]) #  204 Ueberschreitungen
+
+#U.C Test
+V995=(VaR995_bmm_xts<dax_log_xts[2401:6826])
+sum(V995)
+V99=(VaR99_bmm_xts<dax_log_xts[2401:6826])
+sum(V99)
+V95=(VaR95_bmm_xts<dax_log_xts[2401:6826])
+sum(V95)
+
+uc_test(p=0.005,v=V995) #0.213
+uc_test(p=0.01,v=V99)  #0.722
+uc_test(p=0.05,v=V95)  #1.46
+#p-wert
+1-pchisq(uc_test(p=0.005,v=V995),1)
+1-pchisq(uc_test(p=0.01,v=V99),1)
+1-pchisq(uc_test(p=0.05,v=V95),1)
+
+##Ind.Test 
+ind_test(as.vector(V995))#3.07
+ind_test(as.vector(V99)) #5.39
+ind_test(as.vector(V95))  #35.86
+1-pchisq(ind_test(as.vector(V995)),1)#0.08
+1-pchisq(ind_test(as.vector(V99)),1)#0.02
+1-pchisq(ind_test(as.vector(V95)),1)#0.00
+
+##CC Test
+1-pchisq(uc_test(p=0.005,v=V995)+ind_test(as.vector(V995)),2)#0.19
+1-pchisq(uc_test(p=0.01,v=V99)+ind_test(as.vector(V99)),2)#0.05
+1-pchisq(uc_test(p=0.05,v=V95)+ind_test(as.vector(V95)),2)#0.00
+
+##ES Test (Mcneil 2000)
+#ESTest(0.005,-dax_log_xts[2401:6826],ES=-ES995_bmm_xts,VaR=-VaR995_bmm_xts)
+#ESTest(0.01,-dax_log_xts[2401:6826],ES=-ES99_bmm_xts,VaR=-VaR99_bmm_xts)
+#ESTest(0.05,actual=-dax_log_xts[2401:6826],ES=-ES95_bmm_xts,VaR=-VaR95_bmm_xts)
+
+####Acerbi Test 2
+Z2=function(p,ES,L,v){
+  s = matrix(ncol = 1,nrow = length(ES))
+  for (i in 1:length(ES)){
+    s[i]=L[i]*v[i]/(p*length(ES)*ES[i])
+  }
+  return(sum(s)-1)
+}
+Z2(p=0.005,ES=ES995_bmm_xts,L=dax_log_xts[2401:6826],v=V995)#-0.17
+Z2(p=0.01,ES=ES99_bmm_xts,L=dax_log_xts[2401:6826],v=V99)#0.02
+Z2(p=0.05,ES=ES95_bmm_xts,L=dax_log_xts[2401:6826],v=V95)#-0.08
+
+#ESBACK
+#esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES995_bmm_xts,alpha=0.005)
+#esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES99_bmm_xts,alpha=0.01)
+#esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES95_bmm_xts,alpha=0.05)
+
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_bmm_xts,alpha=0.005)#0.99
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_bmm_xts,alpha=0.01)#0.96
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_bmm_xts,alpha=0.05)#0.83
+
+#esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES995_bmm_xts,e=-VaR995_bmm_xts,alpha=0.005)
+#esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR99_bmm_xts,alpha=0.01)
+#esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR95_bmm_xts,alpha=0.05)
+
+#esback::er_backtest(-dax_log_xts[2401:6826],q=-ES995_bmm_xts,e=-VaR995_bmm_xts)
+#esback::er_backtest(-dax_log_xts[2401:6826],q=-ES99_bmm_xts,e=-VaR99_bmm_xts)
+#esback::er_backtest(-dax_log_xts[2401:6826],q=-ES95_bmm_xts,e=-VaR95_bmm_xts)
+
+
 
 
 
