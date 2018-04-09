@@ -661,7 +661,7 @@ meplot(dax_log_xts,xlim=c(0,5),ylim=c(1,1.5),type="l")  #u ist vielleicht 3.5. N
 
 #Hill-Schaetzer (Hill, 1975) (Mecneil 2000) tau^dach=1/k*Sigma^k_(j=1)(log(zj)-log(z(k+1))). 
 
-#####Aber bei Hill-Schaetzer: shape-Parameter muss >0! (Mcneil 2000 Seite.17) Kann noch als Instrument zur Threshold-Wahl?
+#####Aber bei Hill-Schaetzer: shape-Parameter muss >0! (Mcneil 2000 Seite.288) Kann noch als Instrument zur Threshold-Wahl?
 n=6826
 hill(dax_log_xts)
 evir::hill(dax_log_xts,xlim=c(60,340))  #Hill Plot.Ab 100 ist es linear  k=ungefaehr 100, y-Achse = ungefaehr 3.2.
@@ -707,7 +707,7 @@ ES99_pot=numeric(0)
 ES995_pot=numeric(0)
 for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen  
   gpdpot=gpd(dax_log_xts[i:(2399+i)],threshold=quantile(dax_log_xts[i:(2399+i)],0.9),method = "ml")
-  #Mcneil,2000 S.17 the choice of k in Moving Window (10%)
+  #Mcneil,2000 S.288 the choice of k in Moving Window (10%)
   risk=riskmeasures(gpdpot,c(0.95,0.99,0.995))
   VaR995_pot[i]=risk[6]
   VaR99_pot[i]=risk[5]
@@ -725,22 +725,68 @@ ES995_pot_xts=xts(ES995_pot,dax_log$date[2401:6826])
 ES99_pot_xts=xts(ES99_pot,dax_log$date[2401:6826])
 ES95_pot_xts=xts(ES95_pot,dax_log$date[2401:6826])
 
-plot(dax_log_xts[2401:6826],main="VaR")  
+
+plot(dax_log_xts[2401:6826],main="VaR",ylim=c(0,10))  
 lines(VaR995_pot_xts,col="red")   
 lines(VaR99_pot_xts,col="blue")    
 lines(VaR95_pot_xts,col="green") 
-legend("bottomleft",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
-plot(dax_log_xts[2401:6826],main="ES")  
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10))  
 lines(ES995_pot_xts,col="red")   
 lines(ES99_pot_xts,col="blue")    
 lines(ES95_pot_xts,col="green") 
-legend("bottomleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
 sum(VaR995_pot_xts<dax_log_xts[2401:6826]) #  26 Ueberschreitungen
 sum(VaR99_pot_xts<dax_log_xts[2401:6826]) #  61 Ueberschreitungen
 sum(VaR95_pot_xts<dax_log_xts[2401:6826]) #  222 Ueberschreitungen
 
+#U.C Test
+V995=(VaR995_pot_xts<dax_log_xts[2401:6826])
+sum(V995)
+V99=(VaR99_pot_xts<dax_log_xts[2401:6826])
+sum(V99)
+V95=(VaR95_pot_xts<dax_log_xts[2401:6826])
+sum(V95)
+
+uc_test(p=0.005,v=V995) #0.6438
+uc_test(p=0.01,v=V99)  #5.7201
+uc_test(p=0.05,v=V95)  #0.0023
+#p-wert
+1-pchisq(uc_test(p=0.005,v=V995),1)#0.4223216
+1-pchisq(uc_test(p=0.01,v=V99),1)#0.01676582
+1-pchisq(uc_test(p=0.05,v=V95),1)#0.9615142
+
+##Ind.Test 
+ind_test(as.vector(V995))#6.864794
+ind_test(as.vector(V99)) #6.498452
+ind_test(as.vector(V95))  #27.70598
+1-pchisq(ind_test(as.vector(V995)),1)#0.01
+1-pchisq(ind_test(as.vector(V99)),1)#0.01
+1-pchisq(ind_test(as.vector(V95)),1)#0.00
+
+##CC Test
+1-pchisq(uc_test(p=0.005,v=V995)+ind_test(as.vector(V995)),2)#0.02
+1-pchisq(uc_test(p=0.01,v=V99)+ind_test(as.vector(V99)),2)#0.00
+1-pchisq(uc_test(p=0.05,v=V95)+ind_test(as.vector(V95)),2)#0.00
+
+
+####Acerbi Test 2
+Z2=function(p,ES,L,v){
+  s = matrix(ncol = 1,nrow = length(ES))
+  for (i in 1:length(ES)){
+    s[i]=L[i]*v[i]/(p*length(ES)*ES[i])
+  }
+  return(sum(s)-1)
+}
+Z2(p=0.005,ES=ES995_pot_xts,L=dax_log_xts[2401:6826],v=V995)#0.17
+Z2(p=0.01,ES=ES99_pot_xts,L=dax_log_xts[2401:6826],v=V99)#0.34
+Z2(p=0.05,ES=ES95_pot_xts,L=dax_log_xts[2401:6826],v=V95)#0.02
+
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_pot_xts,alpha=0.005)#0.33
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_pot_xts,alpha=0.01)#0.24
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_pot_xts,alpha=0.05)#0.24
 
 
 ######Danielsson2001 Threshold mit Hilfe von Subsample-Bootstrap
