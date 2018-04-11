@@ -851,6 +851,9 @@ garchfit2
 
 #####AR(1)-GARCH(1,1) Mcneil 2000
 garchfit3=garchFit(formula=~arma(1,0)+garch(1,1),data=dax_log_xts,cond.dist ="QMLE")
+garchfit3 #ar1 nicht sig. deshalb arma(0,0)
+garchfit3=garchFit(formula=~garch(1,1),data=dax_log_xts,cond.dist ="QMLE")
+garchfit3
 garchfit3@fit$par
 garchfit3@residuals
 garchfit3@sigma.t    #sd
@@ -859,17 +862,17 @@ garchfit3@fitted
 
 zt=(dax_log_xts-garchfit3@fitted)/garchfit3@sigma.t   #standardisierte Residuen
 plot(zt)
-plot(abs(dax_log_xts))
-plot(garchfit3@sigma.t,type="l")
+plot(abs(dax_log_xts),main="Betrag der Log-Verluste")
+plot(garchfit3@sigma.t,type="l",main="Standardabweichung der Reihe")
 
 par(mfrow=c(2,2))
-acf(dax_log_xts);acf(abs(dax_log_xts))  #nicht i.i.d
-acf(zt);acf(abs(zt))     #keinen ARCH-Effekt
+acf(dax_log_xts,main="ACF der Log-Verluste");acf(abs(dax_log_xts),main="ACF der Abs(Log-Verluste)")  #nicht i.i.d
+acf(zt,main="ACF der Standardisierten Residuen");acf(abs(zt),main="ACF der Abs(Standardisierten Residuen)")     #keinen ARCH-Effekt
 
-Box.test(dax_log_xts,lag=10,type="Ljung-Box") #p=0.00 H0: unabhaengig verteilt
+Box.test(dax_log_xts,lag=10,type="Ljung-Box") #p=0.00 H0: unabhaengig 
 Box.test(zt,lag=10,type="Ljung-Box")  #p=0.53
 
-stats::qqnorm(zt);qqline(dax_log$logreturn)
+stats::qqnorm(zt);qqline(zt)
 
 # Mean Residual Life Plot: (Mean Excess)
 mrlplot(zt, main="Mean Residual Life Plot")    
@@ -937,7 +940,7 @@ lines(VaR99_pot_xts_garch,col="blue")
 lines(VaR95_pot_xts_garch,col="green")   
 sum(VaR995_pot_xts_garch<dax_log_xts[2401:6826]) #  17 Ueberschreitungen
 sum(VaR99_pot_xts_garch<dax_log_xts[2401:6826]) #  34 Ueberschreitungen
-sum(VaR95_pot_xts_garch<dax_log_xts[2401:6826]) #  234 Ueberschreitungen
+sum(VaR95_pot_xts_garch<dax_log_xts[2401:6826]) #  235 Ueberschreitungen
 
 #ES berechnen  Mcneil 2000 S.23 Gleichung-(17) 
 ES995_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR995_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR995_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
