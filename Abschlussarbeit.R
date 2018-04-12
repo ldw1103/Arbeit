@@ -861,7 +861,7 @@ garchfit3@h.t       #Var
 garchfit3@fitted    
 
 zt=(dax_log_xts-garchfit3@fitted)/garchfit3@sigma.t   #standardisierte Residuen
-plot(zt)
+plot(zt,main="Standardisierte Residuen")
 plot(abs(dax_log_xts),main="Betrag der Log-Verluste")
 plot(garchfit3@sigma.t,type="l",main="Standardabweichung der Reihe")
 
@@ -916,38 +916,6 @@ plot(pot_mle_evir_garch) #diagnostik. gut gepasst
 r=riskmeasures(pot_mle_evir_garch,c(0.95,0.99,0.995))
 r
 
-#Moving Windows mit Laenge 2400. (Aber hier, die Parameter von GARCH veraendern sich nicht mit dem Moving Window)
-VaR95_pot_garch=numeric(0)
-VaR99_pot_garch=numeric(0)
-VaR995_pot_garch=numeric(0)
-ES95_pot_garch=numeric(0)
-ES99_pot_garch=numeric(0)
-ES995_pot_garch=numeric(0)
-for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen. Threshold ist wie immer 90% Quantil
-  gpdpotgarch=fevd(as.vector(zt[i:(2399+i)]), method = "MLE", type="GP", threshold=quantile(zt[i:(2399+i)],0.9))
-  VaR995_pot_garch[i]=quantile(zt[i:(2399+i)],0.9)+gpdpotgarch$results$par[1]/gpdpotgarch$results$par[2]*((2400*0.005/240)^(-gpdpotgarch$results$par[2])-1)
-  VaR99_pot_garch[i]=quantile(zt[i:(2399+i)],0.9)+gpdpotgarch$results$par[1]/gpdpotgarch$results$par[2]*((2400*0.01/240)^(-gpdpotgarch$results$par[2])-1)
-  VaR95_pot_garch[i]=quantile(zt[i:(2399+i)],0.9)+gpdpotgarch$results$par[1]/gpdpotgarch$results$par[2]*((2400*0.05/240)^(-gpdpotgarch$results$par[2])-1)
-}  
-
-VaR995_pot_xts_garch=xts(VaR995_pot_garch*garchfit3@sigma.t[2401:6826]+garchfit3@fitted[2401:6826],dax_log$date[2401:6826])#Mcneil S.6
-VaR99_pot_xts_garch=xts(VaR99_pot_garch*garchfit3@sigma.t[2401:6826]+garchfit3@fitted[2401:6826],dax_log$date[2401:6826])
-VaR95_pot_xts_garch=xts(VaR95_pot_garch*garchfit3@sigma.t[2401:6826]+garchfit3@fitted[2401:6826],dax_log$date[2401:6826]) 
-
-plot(dax_log_xts[2401:6826])  
-lines(VaR995_pot_xts_garch,col="red")   
-lines(VaR99_pot_xts_garch,col="blue")    
-lines(VaR95_pot_xts_garch,col="green")   
-sum(VaR995_pot_xts_garch<dax_log_xts[2401:6826]) #  17 Ueberschreitungen
-sum(VaR99_pot_xts_garch<dax_log_xts[2401:6826]) #  34 Ueberschreitungen
-sum(VaR95_pot_xts_garch<dax_log_xts[2401:6826]) #  235 Ueberschreitungen
-
-#ES berechnen  Mcneil 2000 S.23 Gleichung-(17) 
-ES995_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR995_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR995_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
-ES99_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR99_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR99_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
-ES95_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR95_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR95_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
-
-
 #Moving Windows mit Laenge 2400 (Fuer jedes MovingWindow wird GARCH erneut geschaetzt)
 VaR95_pot_z=numeric(0)
 VaR99_pot_z=numeric(0)
@@ -974,7 +942,7 @@ for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen. (laeuft 45 Minute
   VaR995_pot_garch[i]=VaR995_pot_z*predict(garchfitm)[1,3]+predict(garchfitm)[1,1]#Mcneil S.6
   VaR99_pot_garch[i]=VaR99_pot_z*predict(garchfitm)[1,3]+predict(garchfitm)[1,1]
   VaR95_pot_garch[i]=VaR95_pot_z*predict(garchfitm)[1,3]+predict(garchfitm)[1,1]
-  #ES: Mcneil S.23
+  #ES: Mcneil S.293
   ES995_pot_garch[i]=predict(garchfitm)[1,1]+predict(garchfitm)[1,3]*VaR995_pot_z*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(ztm,0.9))/(VaR995_pot_z-VaR995_pot_z*gpdpotgarch$results$par[2]))
   ES99_pot_garch[i]=predict(garchfitm)[1,1]+predict(garchfitm)[1,3]*VaR99_pot_z*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(ztm,0.9))/(VaR99_pot_z-VaR995_pot_z*gpdpotgarch$results$par[2]))
   ES95_pot_garch[i]=predict(garchfitm)[1,1]+predict(garchfitm)[1,3]*VaR95_pot_z*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(ztm,0.9))/(VaR95_pot_z-VaR995_pot_z*gpdpotgarch$results$par[2]))
@@ -983,28 +951,82 @@ VaR995_pot_xts_garch=xts(VaR995_pot_garch,dax_log$date[2401:6826])
 VaR99_pot_xts_garch=xts(VaR99_pot_garch,dax_log$date[2401:6826])
 VaR95_pot_xts_garch=xts(VaR95_pot_garch,dax_log$date[2401:6826])
 
+ES995_pot_xts_garch=xts(ES995_pot_garch,dax_log$date[2401:6826])
+ES99_pot_xts_garch=xts(ES99_pot_garch,dax_log$date[2401:6826])
+ES95_pot_xts_garch=xts(ES95_pot_garch,dax_log$date[2401:6826])
 
-plot(dax_log_xts[2401:6826],main="VaR")  
+
+
+plot(dax_log_xts[2401:6826],main="VaR",ylim=c(0,10))  
 lines(VaR995_pot_xts_garch,col="red")   
 lines(VaR99_pot_xts_garch,col="blue")    
 lines(VaR95_pot_xts_garch,col="green")   
-legend("bottomleft",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
-sum(VaR995_pot_xts_garch<zt[2401:6826]) #  28 Ueberschreitungen
-sum(VaR99_pot_xts_garch<zt[2401:6826]) #  43 Ueberschreitungen
-sum(VaR95_pot_xts_garch<zt[2401:6826]) #  199 Ueberschreitungen
+legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+sum(VaR995_pot_xts_garch<dax_log_xts[2401:6826]) #  16 Ueberschreitungen
+sum(VaR99_pot_xts_garch<dax_log_xts[2401:6826]) #  36 Ueberschreitungen
+sum(VaR95_pot_xts_garch<dax_log_xts[2401:6826]) #  232 Ueberschreitungen
 
-
-#ES berechnen  Mcneil 2000 S.23 Gleichung-(17) 
-
-ES995_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR995_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR995_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
-ES99_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR99_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR99_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
-ES95_pot_xts_garch=xts(garchfit3@fitted[2401:6826]+garchfit3@sigma.t[2401:6826]*VaR95_pot_garch*(1/(1-gpdpotgarch$results$par[2])+(gpdpotgarch$results$par[1]-gpdpotgarch$results$par[2]*quantile(zt[i:(2399+i)],0.9))/(VaR95_pot_garch-VaR995_pot_garch*gpdpotgarch$results$par[2])),dax_log$date[2401:6826])
-plot(dax_log_xts[2401:6826],main="ES")  
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10))  
 lines(ES995_pot_xts_garch,col="red")   
 lines(ES99_pot_xts_garch,col="blue")    
 lines(ES95_pot_xts_garch,col="green") 
-legend("bottomleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
+
+###ARMA(0,0) GARCH(1,1)
+VaR95_pot_z0=numeric(0)
+VaR99_pot_z0=numeric(0)
+VaR995_pot_z0=numeric(0)
+ES95_pot_garch0=numeric(0)
+ES99_pot_garch0=numeric(0)
+ES995_pot_garch0=numeric(0)
+
+VaR95_pot_garch0=numeric(0)
+VaR99_pot_garch0=numeric(0)
+VaR995_pot_garch0=numeric(0)
+ES95_pot_garch0=numeric(0)
+ES99_pot_garch0=numeric(0)
+ES995_pot_garch0=numeric(0)
+
+
+for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen. (laeuft 45 Minuten..)
+  garchfitm0=garchFit(formula=~arma(0,0)+garch(1,1),data=dax_log_xts[i:(2399+i)],cond.dist ="QMLE")
+  ztm0=(dax_log_xts[i:(2399+i)]-garchfitm0@fitted)/garchfitm0@sigma.t
+  gpdpotgarch0=fevd(as.vector(ztm0), method = "MLE", type="GP", threshold=quantile(ztm0,(2400-240)/2400))
+  VaR995_pot_z0=quantile(ztm0,0.9)+gpdpotgarch0$results$par[1]/gpdpotgarch0$results$par[2]*((2400*0.005/240)^(-gpdpotgarch0$results$par[2])-1)
+  VaR99_pot_z0=quantile(ztm0,0.9)+gpdpotgarch0$results$par[1]/gpdpotgarch0$results$par[2]*((2400*0.01/240)^(-gpdpotgarch0$results$par[2])-1)
+  VaR95_pot_z0=quantile(ztm0,0.9)+gpdpotgarch0$results$par[1]/gpdpotgarch0$results$par[2]*((2400*0.05/240)^(-gpdpotgarch0$results$par[2])-1)
+  
+  VaR995_pot_garch0[i]=VaR995_pot_z0*predict(garchfitm0)[1,3]+predict(garchfitm0)[1,1]#Mcneil S.6
+  VaR99_pot_garch0[i]=VaR99_pot_z0*predict(garchfitm0)[1,3]+predict(garchfitm0)[1,1]
+  VaR95_pot_garch0[i]=VaR95_pot_z0*predict(garchfitm0)[1,3]+predict(garchfitm0)[1,1]
+  #ES: Mcneil S.293
+  ES995_pot_garch0[i]=predict(garchfitm0)[1,1]+predict(garchfitm0)[1,3]*VaR995_pot_z0*(1/(1-gpdpotgarch0$results$par[2])+(gpdpotgarch0$results$par[1]-gpdpotgarch0$results$par[2]*quantile(ztm0,0.9))/(VaR995_pot_z0-VaR995_pot_z0*gpdpotgarch0$results$par[2]))
+  ES99_pot_garch0[i]=predict(garchfitm0)[1,1]+predict(garchfitm0)[1,3]*VaR99_pot_z0*(1/(1-gpdpotgarch0$results$par[2])+(gpdpotgarch0$results$par[1]-gpdpotgarch0$results$par[2]*quantile(ztm0,0.9))/(VaR99_pot_z0-VaR995_pot_z0*gpdpotgarch0$results$par[2]))
+  ES95_pot_garch0[i]=predict(garchfitm0)[1,1]+predict(garchfitm0)[1,3]*VaR95_pot_z0*(1/(1-gpdpotgarch0$results$par[2])+(gpdpotgarch0$results$par[1]-gpdpotgarch0$results$par[2]*quantile(ztm0,0.9))/(VaR95_pot_z0-VaR995_pot_z0*gpdpotgarch0$results$par[2]))
+}  
+VaR995_pot_xts_garch0=xts(VaR995_pot_garch0,dax_log$date[2401:6826])
+VaR99_pot_xts_garch0=xts(VaR99_pot_garch0,dax_log$date[2401:6826])
+VaR95_pot_xts_garch0=xts(VaR95_pot_garch0,dax_log$date[2401:6826])
+
+ES995_pot_xts_garch0=xts(ES995_pot_garch0,dax_log$date[2401:6826])
+ES99_pot_xts_garch0=xts(ES99_pot_garch0,dax_log$date[2401:6826])
+ES95_pot_xts_garch0=xts(ES95_pot_garch0,dax_log$date[2401:6826])
+
+plot(dax_log_xts[2401:6826],main="VaR",ylim=c(0,10))  
+lines(VaR995_pot_xts_garch0,col="red")   
+lines(VaR99_pot_xts_garch0,col="blue")    
+lines(VaR95_pot_xts_garch0,col="green")   
+legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+sum(VaR995_pot_xts_garch0<dax_log_xts[2401:6826]) #  16 Ueberschreitungen
+sum(VaR99_pot_xts_garch0<dax_log_xts[2401:6826]) #  35 Ueberschreitungen
+sum(VaR95_pot_xts_garch0<dax_log_xts[2401:6826]) #  232 Ueberschreitungen
+
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10))  
+lines(ES995_pot_xts_garch0,col="red")   
+lines(ES99_pot_xts_garch0,col="blue")    
+lines(ES95_pot_xts_garch0,col="green") 
+legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
 
 
