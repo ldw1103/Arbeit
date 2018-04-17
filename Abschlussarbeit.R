@@ -1337,30 +1337,41 @@ ES95_skt=numeric(0)
 ES99_skt=numeric(0)
 ES995_skt=numeric(0)
 
+integrand=function(x){2*x/(paraskt[4] + 1/paraskt[4]) * dt(x[x >= 0]/paraskt[4], df=paraskt[3])}
+
+mf=function(nu,xi){gamma((nu-1)/2)*sqrt(nu-2)/(sqrt(pi)*gamma(nu/2))*(xi-1/xi)}
+sf=function(xi,m){(xi^2+1/xi-1)-m^2}
+
 for (i in 1:4426){
   sp=dax_log_xts[i:(2400+i)]
   sktfit=sstdFit(sp)
-  para=as.numeric(tfit$estimate)
-  VaR95_t[i]=para[1]+para[2]*qt(0.95,df=para[3])
-  VaR99_t[i]=para[1]+para[2]*qt(0.99,df=para[3])
-  VaR995_t[i]=para[1]+para[2]*qt(0.995,df=para[3])
-  ES95_t[i]=para[1]+para[2]*(dt(qt(0.95,df=para[3]),df=para[3])/0.05*((para[3]+(qt(0.95,df=para[3]))^2)/(para[3]-1)))
-  ES99_t[i]=para[1]+para[2]*(dt(qt(0.99,df=para[3]),df=para[3])/0.01*((para[3]+(qt(0.99,df=para[3]))^2)/(para[3]-1)))
-  ES995_t[i]=para[1]+para[2]*(dt(qt(0.995,df=para[3]),df=para[3])/0.005*((para[3]+(qt(0.995,df=para[3]))^2)/(para[3]-1)))
+  paraskt=as.numeric(sktfit$estimate)
+  #VaR95_skt[i]=paraskt[1]+paraskt[2]*qskt(0.95,df=paraskt[3],gamma=paraskt[4])
+  #VaR99_skt[i]=paraskt[1]+paraskt[2]*qskt(0.99,df=paraskt[3],gamma=paraskt[4])
+  #VaR995_skt[i]=paraskt[1]+paraskt[2]*qskt(0.995,df=paraskt[3],gamma=paraskt[4])
+  #m=mf(nu=paraskt[3],xi=paraskt[4])
+  #s=sf(xi=paraskt[4],m=m)
+  #VaR95_skt[i]=(qskt(0.95,df=paraskt[3],gamma=paraskt[4])-m)/s
+  #VaR99_skt[i]=(qskt(0.99,df=paraskt[3],gamma=paraskt[4])-m)/s
+  #VaR995_skt[i]=(qskt(0.995,df=paraskt[3],gamma=paraskt[4])-m)/s
+  VaR95_skt[i]=qskt(0.95,df=paraskt[3],gamma=paraskt[4])
+  VaR99_skt[i]=qskt(0.99,df=paraskt[3],gamma=paraskt[4])
+  VaR995_skt[i]=qskt(0.995,df=paraskt[3],gamma=paraskt[4])
+  #ES95_skt[i]=integrate(integrand,lower=qskt(0.95,df=paraskt[3],gamma=paraskt[4]),upper=Inf)$value*20
+  #ES99_skt[i]=integrate(integrand,lower=qskt(0.99,df=paraskt[3],gamma=paraskt[4]),upper=Inf)$value*100
+  #ES995_skt[i]=integrate(integrand,lower=qskt(0.995,df=paraskt[3],gamma=paraskt[4]),upper=Inf)$value*200
 }
 
-}
-
-plot(dax_log_xts[2401:6826],main="VaR",ylim=c(0,10))  
+plot(dax_log_xts[2401:6826],main="VaR",ylim=c(0,12))  
 lines(xts(VaR995_skt,dax_log$date[2401:6826]),col="red")   
 lines(xts(VaR99_skt,dax_log$date[2401:6826]),col="blue")    
 lines(xts(VaR95_skt,dax_log$date[2401:6826]),col="green")   
 legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
-sum(VaR995_skt<dax_log_xts[2401:6826]) #  70 Ueberschreitungen
-sum(VaR99_skt<dax_log_xts[2401:6826]) #  87 Ueberschreitungen
-sum(VaR95_skt<dax_log_xts[2401:6826]) #  218 Ueberschreitungen
+sum(VaR995_skt<dax_log_xts[2401:6826]) #  23 Ueberschreitungen
+sum(VaR99_skt<dax_log_xts[2401:6826]) #  50 Ueberschreitungen
+sum(VaR95_skt<dax_log_xts[2401:6826]) #  220 Ueberschreitungen
 
-plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10))  
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,12))  
 lines(xts(ES995_skt,dax_log$date[2401:6826]),col="red")   
 lines(xts(ES99_skt,dax_log$date[2401:6826]),col="blue")    
 lines(xts(ES95_skt,dax_log$date[2401:6826]),col="green") 
@@ -1374,26 +1385,26 @@ sum(V99)
 V95=(VaR95_skt<dax_log_xts[2401:6826])
 sum(V95)
 
-uc_test(p=0.005,v=V995) #66
-uc_test(p=0.01,v=V99)  #32.53211
-uc_test(p=0.05,v=V95)  #0.02524534
+uc_test(p=0.005,v=V995) #0.03393473
+uc_test(p=0.01,v=V99)  #0.7216897
+uc_test(p=0.05,v=V95)  #0.00805358
 #p-wert
-1-pchisq(uc_test(p=0.005,v=V995),1)#0
-1-pchisq(uc_test(p=0.01,v=V99),1)#0
-1-pchisq(uc_test(p=0.05,v=V95),1)#0.8737573
+1-pchisq(uc_test(p=0.005,v=V995),1)#0.8538457
+1-pchisq(uc_test(p=0.01,v=V99),1)#0.3955902
+1-pchisq(uc_test(p=0.05,v=V95),1)#0.9284924
 
 ##Ind.Test 
-ind_test(as.vector(V995))#11.20981
-ind_test(as.vector(V99)) #20.4193
-ind_test(as.vector(V95))  #28.9707
-1-pchisq(ind_test(as.vector(V995)),1)#0.00
-1-pchisq(ind_test(as.vector(V99)),1)#0.00
+ind_test(as.vector(V995))#7.826568
+ind_test(as.vector(V99)) #5.392789
+ind_test(as.vector(V95))  #31.08494
+1-pchisq(ind_test(as.vector(V995)),1)#0.01
+1-pchisq(ind_test(as.vector(V99)),1)#0.02
 1-pchisq(ind_test(as.vector(V95)),1)#0.00
 
 ##CC Test
-1-pchisq(uc_test(p=0.005,v=V995)+ind_test(as.vector(V995)),2)#0
-1-pchisq(uc_test(p=0.01,v=V99)+ind_test(as.vector(V99)),2)#0
-1-pchisq(uc_test(p=0.05,v=V95)+ind_test(as.vector(V95)),2)#0
+1-pchisq(uc_test(p=0.005,v=V995)+ind_test(as.vector(V995)),2)#0.02
+1-pchisq(uc_test(p=0.01,v=V99)+ind_test(as.vector(V99)),2)#0.05
+1-pchisq(uc_test(p=0.05,v=V95)+ind_test(as.vector(V95)),2)#0.00
 
 
 ####Acerbi Test 2
@@ -1404,13 +1415,13 @@ Z2=function(p,ES,L,v){
   }
   return(sum(s)-1)
 }
-Z2(p=0.005,ES=ES995_skt,L=dax_log_xts[2401:6826],v=V995)#2.728504
-Z2(p=0.01,ES=ES99_skt,L=dax_log_xts[2401:6826],v=V99)#1.379741
-Z2(p=0.05,ES=ES95_skt,L=dax_log_xts[2401:6826],v=V95)#0.1736356
+Z2(p=0.005,ES=ES995_skt,L=dax_log_xts[2401:6826],v=V995)#-0.07049827
+Z2(p=0.01,ES=ES99_skt,L=dax_log_xts[2401:6826],v=V99)#0.03311695
+Z2(p=0.05,ES=ES95_skt,L=dax_log_xts[2401:6826],v=V95)#-0.02831101
 
-esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_skt,alpha=0.005)#0
-esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_skt,alpha=0.01)#0
-esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_skt,alpha=0.05)#0
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_skt,alpha=0.005)#0.996
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_skt,alpha=0.01)#0.923
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_skt,alpha=0.05)#0.795
 
 
 ##GARCH
