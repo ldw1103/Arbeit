@@ -1543,4 +1543,134 @@ esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_garchnv_xts,alpha=0.005)
 esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_garchnv_xts,alpha=0.01)#0.001160678
 esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_garchnv_xts,alpha=0.05)#0.00
 
+##GARCH mit t
+VaR95_garcht_z=numeric(0)
+VaR99_garcht_z=numeric(0)
+VaR995_garcht_z=numeric(0)
+ES95_garcht_z=numeric(0)
+ES99_garcht_z=numeric(0)
+ES995_garcht_z=numeric(0)
+
+
+VaR95_garcht=numeric(0)
+VaR99_garcht=numeric(0)
+VaR995_garcht=numeric(0)
+ES95_garcht=numeric(0)
+ES99_garcht=numeric(0)
+ES995_garcht=numeric(0)
+
+
+for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen.  ##2244? 
+  garchtfit=garchFit(formula=~arma(0,0)+garch(1,1),data=dax_log_xts[i:(2399+i)],cond.dist ="std")
+  zgarcht=(dax_log_xts[i:(2399+i)]-garchtfit@fitted)/garchtfit@sigma.t
+##
+  tgarchfit=fitdistr(zgarcht,"t")
+  paragarcht=as.numeric(tgarchfit$estimate)
+  VaR95_garcht_z[i]=paragarcht[1]+paragarcht[2]*qt(0.95,df=paragarcht[3])
+  VaR99_garcht_z[i]=paragarcht[1]+paragarcht[2]*qt(0.99,df=paragarcht[3])
+  VaR995_garcht_z[i]=paragarcht[1]+paragarcht[2]*qt(0.995,df=paragarcht[3])
+  ES95_garcht_z[i]=paragarcht[1]+paragarcht[2]*(dt(qt(0.95,df=paragarcht[3]),df=paragarcht[3])/0.05*((paragarcht[3]+(qt(0.95,df=paragarcht[3]))^2)/(paragarcht[3]-1)))
+  ES99_garcht_z[i]=paragarcht[1]+paragarcht[2]*(dt(qt(0.99,df=paragarcht[3]),df=paragarcht[3])/0.01*((paragarcht[3]+(qt(0.99,df=paragarcht[3]))^2)/(paragarcht[3]-1)))
+  ES995_garcht_z[i]=paragarcht[1]+paragarcht[2]*(dt(qt(0.995,df=paragarcht[3]),df=paragarcht[3])/0.005*((paragarcht[3]+(qt(0.995,df=paragarcht[3]))^2)/(paragarcht[3]-1)))  
+  
+  
+#  VaR995_garcht_z=qt(0.995,mean=mean(zgarcht),sd=sd(zgarcht))
+#  VaR99_garcht_z=qt(0.99,mean=mean(zgarcht),sd=sd(zgarcht))
+#  VaR95_garcht_z=qt(0.95,mean=mean(zgarcht),sd=sd(zgarcht))
+  
+  VaR995_garcht[i]=VaR995_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
+  VaR99_garcht[i]=VaR99_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
+  VaR95_garcht[i]=VaR95_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
+  
+#  ES995_garcht_z[i]=mean(zgarcht)+sd(zgarcht)*dt(qnorm(0.995))/0.005
+#  ES99_garcht_z[i]=mean(zgarcht)+sd(zgarcht)*dt(qnorm(0.99))/0.01
+#  ES95_garcht_z[i]=mean(zgarcht)+sd(zgarcht)*dt(qnorm(0.95))/0.05
+  
+  ES995_garcht[i]=ES995_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
+  ES99_garcht[i]=ES99_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
+  ES95_garcht[i]=ES95_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
+  
+}  
+VaR995_garcht_xts=xts(VaR995_garcht,dax_log$date[2401:6826])
+VaR99_garcht_xts=xts(VaR99_garcht,dax_log$date[2401:6826])
+VaR95_garcht_xts=xts(VaR95_garcht,dax_log$date[2401:6826])
+
+ES995_garcht_xts=xts(ES995_garcht,dax_log$date[2401:6826])
+ES99_garcht_xts=xts(ES99_garcht,dax_log$date[2401:6826])
+ES95_garcht_xts=xts(ES95_garcht,dax_log$date[2401:6826])
+
+plot(dax_log_xts[2401:6826],main="VaR",ylim=c(0,10))  
+lines(VaR995_garcht_xts,col="red")   
+lines(VaR99_garcht_xts,col="blue")    
+lines(VaR95_garcht_xts,col="green")   
+legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+sum(VaR995_garcht_xts<dax_log_xts[2401:6826]) #  30 Ueberschreitungen
+sum(VaR99_garcht_xts<dax_log_xts[2401:6826]) #  50 Ueberschreitungen
+sum(VaR95_garcht_xts<dax_log_xts[2401:6826]) #  283 Ueberschreitungen
+
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,12))  
+lines(ES995_garcht_xts,col="red")   
+lines(ES99_garcht_xts,col="blue")    
+lines(ES95_garcht_xts,col="green") 
+legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+
+#nur die ersten 1000 Prognosen
+plot(dax_log_xts[2401:3400],main="VaR",ylim=c(0,12))  
+lines(VaR995_garcht_xts[1:1000],col="red")   
+lines(VaR99_garcht_xts[1:1000],col="blue")    
+lines(VaR95_garcht_xts[1:1000],col="green")   
+legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+
+plot(dax_log_xts[2401:3400],main="ES",ylim=c(0,13))  
+lines(ES995_garcht_xts[1:1000],col="red")   
+lines(ES99_garcht_xts[1:1000],col="blue")    
+lines(ES95_garcht_xts[1:1000],col="green") 
+legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+
+#U.C Test
+V995=(VaR995_garcht_xts<dax_log_xts[2401:6826])
+sum(V995)
+V99=(VaR99_garcht_xts<dax_log_xts[2401:6826])
+sum(V99)
+V95=(VaR95_garcht_xts<dax_log_xts[2401:6826])
+sum(V95)
+
+uc_test(p=0.005,v=V995) #2.529866
+uc_test(p=0.01,v=V99)  #0.7216897
+uc_test(p=0.05,v=V95)  #16.7049
+#p-wert
+1-pchisq(uc_test(p=0.005,v=V995),1)#0.1117097
+1-pchisq(uc_test(p=0.01,v=V99),1)#0.3955902
+1-pchisq(uc_test(p=0.05,v=V95),1)#0.00
+
+##Ind.Test 
+ind_test(as.vector(V995))#1.635166
+ind_test(as.vector(V99)) #0.2796254
+ind_test(as.vector(V95))  #0.07757313
+1-pchisq(ind_test(as.vector(V995)),1)#0.20099
+1-pchisq(ind_test(as.vector(V99)),1)#0.5969468
+1-pchisq(ind_test(as.vector(V95)),1)#0.7806136
+
+##CC Test
+1-pchisq(uc_test(p=0.005,v=V995)+ind_test(as.vector(V995)),2)#0.1246163
+1-pchisq(uc_test(p=0.01,v=V99)+ind_test(as.vector(V99)),2)#0.606132
+1-pchisq(uc_test(p=0.05,v=V95)+ind_test(as.vector(V95)),2)#0.0002268465
+
+
+####Acerbi Test 2
+Z2=function(p,ES,L,v){
+  s = matrix(ncol = 1,nrow = length(ES))
+  for (i in 1:length(ES)){
+    s[i]=L[i]*v[i]/(p*length(ES)*ES[i])
+  }
+  return(sum(s)-1)
+}
+Z2(p=0.005,ES=ES995_garcht_xts,L=dax_log_xts[2401:6826],v=V995)#0.4106186
+Z2(p=0.01,ES=ES99_garcht_xts,L=dax_log_xts[2401:6826],v=V99)#0.1826519
+Z2(p=0.05,ES=ES95_garcht_xts,L=dax_log_xts[2401:6826],v=V95)#0.2890399
+
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_garcht_xts,alpha=0.005)#0.06637217
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_garcht_xts,alpha=0.01)#0.08002596
+esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_garcht_xts,alpha=0.05)#0.002496068
+
 
