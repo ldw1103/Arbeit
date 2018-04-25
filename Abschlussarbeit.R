@@ -925,10 +925,20 @@ lines(ES95_pot_xts_garch0,col="green")
 legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
 ##mit Punkten
-plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10),type="p",pch=16)
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10),type="p",pch=1)
 cc=dax_log_xts[2401:6826]
-points(cc[cc>VaR95_pot_garch0],type="p",col="orange",pch=16)
+points(cc[cc>VaR95_pot_garch0],type="p",col="blue",pch=16)
 points(cc[cc>ES95_pot_garch0],type="p",col="red",pch=16)
+
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10),type="p",pch=1)
+cc=dax_log_xts[2401:6826]
+points(cc[cc>VaR99_pot_garch0],type="p",col="blue",pch=16)
+points(cc[cc>ES99_pot_garch0],type="p",col="red",pch=16)
+
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10),type="p",pch=1)
+cc=dax_log_xts[2401:6826]
+points(cc[cc>VaR995_pot_garch0],type="p",col="blue",pch=16)
+points(cc[cc>ES995_pot_garch0],type="p",col="red",pch=16)
 
 #nur die ersten 1000 Prognosen
 plot(dax_log_xts[2401:3400],main="VaR",ylim=c(0,12))  
@@ -1438,18 +1448,10 @@ for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen.
   ES99_garcht_z[i]=paragarcht[1]+paragarcht[2]*(dt(qt(0.99,df=paragarcht[3]),df=paragarcht[3])/0.01*((paragarcht[3]+(qt(0.99,df=paragarcht[3]))^2)/(paragarcht[3]-1)))
   ES995_garcht_z[i]=paragarcht[1]+paragarcht[2]*(dt(qt(0.995,df=paragarcht[3]),df=paragarcht[3])/0.005*((paragarcht[3]+(qt(0.995,df=paragarcht[3]))^2)/(paragarcht[3]-1)))  
   
-  
-#  VaR995_garcht_z=qt(0.995,mean=mean(zgarcht),sd=sd(zgarcht))
-#  VaR99_garcht_z=qt(0.99,mean=mean(zgarcht),sd=sd(zgarcht))
-#  VaR95_garcht_z=qt(0.95,mean=mean(zgarcht),sd=sd(zgarcht))
-  
   VaR995_garcht[i]=VaR995_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
   VaR99_garcht[i]=VaR99_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
   VaR95_garcht[i]=VaR95_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
   
-#  ES995_garcht_z[i]=mean(zgarcht)+sd(zgarcht)*dt(qnorm(0.995))/0.005
-#  ES99_garcht_z[i]=mean(zgarcht)+sd(zgarcht)*dt(qnorm(0.99))/0.01
-#  ES95_garcht_z[i]=mean(zgarcht)+sd(zgarcht)*dt(qnorm(0.95))/0.05
   
   ES995_garcht[i]=ES995_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
   ES99_garcht[i]=ES99_garcht_z[i]*predict(garchtfit)[1,3]+predict(garchtfit)[1,1]
@@ -1751,3 +1753,15 @@ Z2(p=0.05,ES=ES95_garchsktnew_xts,L=dax_log_xts[2401:6826],v=V95)#0.2041646
 esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_garchsktnew_xts,alpha=0.005)#0.2928824
 esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_garchsktnew_xts,alpha=0.01)#0.4373226
 esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_garchsktnew_xts,alpha=0.05)#0.09939625
+
+###Verletzungen jedes Jahrs
+sum(VaR995_hs<dax_log_xts[2401:6826]) #  24 Ueberschreitungen
+sum(VaR99_hs<dax_log_xts[2401:6826]) #  57 Ueberschreitungen
+sum(VaR95_hs<dax_log_xts[2401:6826]) #  220 Ueberschreitungen
+
+head(dax_log_xts[2401:6826])
+head(cc)
+cc[133]   #133
+cc[386]   #385
+cc[639]   #639
+cc[892]  #892
