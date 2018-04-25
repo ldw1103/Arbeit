@@ -181,13 +181,11 @@ fit_monatmax$results$par
 
 period.max(dax_log_xts,seq(from=20,to=6826,by=20))  #Monatlich z.B.
 
-###Goodness of Fit fuer GEV (Stephens 1977)
+###Goodness of Fit Shermann 1957
 bmm_monat_st=period.max(dax_log_xts[1:6720],seq(from=20,to=6720,by=20))
 bmm_quartal_st=period.max(dax_log_xts[1:6720],seq(from=60,to=6720,by=60))
 bmm_semester_st=period.max(dax_log_xts[1:6720],seq(from=120,to=6720,by=120))
 bmm_jahr_st=period.max(dax_log_xts[1:6720],seq(from=240,to=6720,by=240))
-
-
 
 ####Monat:
 fit_monat_st <- fevd(as.vector(bmm_monat_st), method = "MLE", type="GEV") 
@@ -300,9 +298,7 @@ omega2=sqrt(exp(2)/(2*exp(1)-1)*28)*(omega-exp(-1))
 omega1 #-0.81
 omega2 #-0.30
 
-####Alle bestehen bei dem Test. Deshalb wird n = 20 gewaehlt! (mehr Beobachtungen) 
-
-
+####Alle bestehen den Test. Deshalb wird n = 20 gewaehlt! (mehr Beobachtungen) 
 
 # Moving Window (Groesse=2400) Zum Beispiel: das erste Fenster. Laenge=2400, damit durch 20,60,120,240 perfekt teilbar.
 ts_bm_1=dax_log_xts[1:2400]   
@@ -523,20 +519,6 @@ theta_dach #0.44
 
 #Theta mir "evir" berechnen. n=60,120 ...
 
-#n=120 Longin 2000: Block = Semester
-#n120max=period.max(dax_log_xts[1:6720],seq(from=120,to=6720,by=120))
-#sum(n120max>quantile(dax_log_xts,0.95))
-#sum(n120max>5) #Ueberschreitungen des Blocks = 13. Longin 2000: 5% als Threshold. Und Block = Semester
-#index120=exindex(dax_log_xts,block=120)
-#index120 #0.3190
-
-#sum(n60max>5)  #17  #Longin 2000: 5% als Threshold. 
-#index60=exindex(dax_log_xts,block=60) 
-#index60 #0.398
-
-
-
-
 #VaR
 #n=120, Moving Window = 2400. Theta= 0.50. (S.13 Mcneil1998)
 VaR95_bmme=numeric(0)
@@ -550,7 +532,7 @@ fit=numeric(0)
 VaR20 = function(x){mu-sigma/tau*(1-(-log((1-x)^(20*0.50)))^(-tau))} #tau = xi = shape Parameter
 
 for (i in (1:4426)){         #es gibt (6826-2400) Vorhersagen
-  n20max=period.max(dax_log_xts[i:(i+2399)],seq(from=20,to=2400,by=20))    #die groessete quartalliche Verlust
+  n20max=period.max(dax_log_xts[i:(i+2399)],seq(from=20,to=2400,by=20))    #der groessete quartalliche Verlust
   fit <- fevd(as.vector(n20max), method = "MLE", type="GEV")
   VaR995_bmme[i]=return.level(fit, conf = 0.05, return.period= 20.454135)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^(n*theta)=(1-1/k). Hier n = 20, Theta=0.45
   VaR99_bmme[i]=return.level(fit, conf = 0.05, return.period= 10.458290)[1]  
@@ -616,36 +598,15 @@ ind_test(as.vector(V95))  #35.86
 1-pchisq(uc_test(p=0.01,v=V99)+ind_test(as.vector(V99)),2)#0.05
 1-pchisq(uc_test(p=0.05,v=V95)+ind_test(as.vector(V95)),2)#0.00
 
-##ES Test (Mcneil 2000)
-#ESTest(0.005,-dax_log_xts[2401:6826],ES=-ES995_bmme_xts,VaR=-VaR995_bmme_xts)
-#ESTest(0.01,-dax_log_xts[2401:6826],ES=-ES99_bmme_xts,VaR=-VaR99_bmme_xts)
-#ESTest(0.05,actual=-dax_log_xts[2401:6826],ES=-ES95_bmme_xts,VaR=-VaR95_bmme_xts)
-
 ####ES TEST
 
 Z2(p=0.005,ES=ES995_bmme_xts,L=dax_log_xts[2401:6826],v=V995)#-0.17
 Z2(p=0.01,ES=ES99_bmme_xts,L=dax_log_xts[2401:6826],v=V99)#0.02
 Z2(p=0.05,ES=ES95_bmme_xts,L=dax_log_xts[2401:6826],v=V95)#-0.08
 
-#ESBACK
-#esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES995_bmme_xts,alpha=0.005)
-#esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES99_bmme_xts,alpha=0.01)
-#esback::esr_backtest(-dax_log_xts[2401:6826],e=-ES95_bmme_xts,alpha=0.05)
-
 esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES995_bmme_xts,alpha=0.005)#0.99
 esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES99_bmme_xts,alpha=0.01)#0.96
 esr_backtest_intercept(-dax_log_xts[2401:6826],e=-ES95_bmme_xts,alpha=0.05)#0.83
-
-#esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES995_bmme_xts,e=-VaR995_bmme_xts,alpha=0.005)
-#esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmme_xts,e=-VaR99_bmme_xts,alpha=0.01)
-#esback::cc_backtest(-dax_log_xts[2401:6826],q=-ES99_bmme_xts,e=-VaR95_bmme_xts,alpha=0.05)
-
-#esback::er_backtest(-dax_log_xts[2401:6826],q=-ES995_bmme_xts,e=-VaR995_bmme_xts)
-#esback::er_backtest(-dax_log_xts[2401:6826],q=-ES99_bmme_xts,e=-VaR99_bmme_xts)
-#esback::er_backtest(-dax_log_xts[2401:6826],q=-ES95_bmme_xts,e=-VaR95_bmme_xts)
-
-
-
 
 
 ###############POT################
@@ -963,6 +924,12 @@ lines(ES99_pot_xts_garch0,col="blue")
 lines(ES95_pot_xts_garch0,col="green") 
 legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
 
+##mit Punkten
+plot(dax_log_xts[2401:6826],main="ES",ylim=c(0,10),type="p",pch=16)
+cc=dax_log_xts[2401:6826]
+points(cc[cc>VaR95_pot_garch0],type="p",col="orange",pch=16)
+points(cc[cc>ES95_pot_garch0],type="p",col="red",pch=16)
+
 #nur die ersten 1000 Prognosen
 plot(dax_log_xts[2401:3400],main="VaR",ylim=c(0,12))  
 lines(VaR995_pot_xts_garch0[1:1000],col="red")   
@@ -1250,8 +1217,8 @@ ES995_skt=numeric(0)
 
 integrand=function(x){2*x/(paraskt[4] + 1/paraskt[4]) * dt(x[x >= 0]/paraskt[4], df=paraskt[3])}
 
-mf=function(nu,xi){gamma((nu-1)/2)*sqrt(nu-2)/(sqrt(pi)*gamma(nu/2))*(xi-1/xi)}
-sf=function(xi,m){(xi^2+1/xi-1)-m^2}
+#mf=function(nu,xi){gamma((nu-1)/2)*sqrt(nu-2)/(sqrt(pi)*gamma(nu/2))*(xi-1/xi)}
+#sf=function(xi,m){(xi^2+1/xi-1)-m^2}
 
 for (i in 1:4426){
   sp=dax_log_xts[i:(2399+i)]
@@ -1265,7 +1232,7 @@ for (i in 1:4426){
   #VaR95_skt[i]=(qskt(0.95,df=paraskt[3],gamma=paraskt[4])-m)/s
   #VaR99_skt[i]=(qskt(0.99,df=paraskt[3],gamma=paraskt[4])-m)/s
   #VaR995_skt[i]=(qskt(0.995,df=paraskt[3],gamma=paraskt[4])-m)/s
-  VaR95_skt[i]=qskt(0.95,df=paraskt[3],gamma=paraskt[4])
+  VaR95_skt[i]=qskt(0.95,df=paraskt[3],gamma=paraskt[4])##Giot2003 S.7
   VaR99_skt[i]=qskt(0.99,df=paraskt[3],gamma=paraskt[4])
   VaR995_skt[i]=qskt(0.995,df=paraskt[3],gamma=paraskt[4])
   ES95_skt[i]=integrate(integrand,lower=qskt(0.95,df=paraskt[3],gamma=paraskt[4]),upper=Inf)$value*20
