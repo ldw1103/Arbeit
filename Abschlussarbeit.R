@@ -16,6 +16,7 @@ library(forecast)
 library(evir)   #auch Extremwerttheorie
 library(esback)  #ES backtesting
 library(fGarch) #garch
+library("vrtest") #Variance Ratio Test
 
 #Daten Einlesen
 daten=read.csv("DAX.csv") #Quelle: finance.yahoo.com
@@ -619,7 +620,7 @@ evir::hill(dax_log_xts,xlim=c(60,340))  #Hill Plot.Ab 100 ist es linear  k=ungef
 quantile(dax_log_xts,(6826-100)/6826)  # Threshold wird als 3.50 gewaehlt.
 
 
-#dax_log_order=sort(-dax_log$logreturn,decreasing = TRUE) 
+dax_log_order=sort(-dax_log$logreturn,decreasing = TRUE) 
 #dax_log_order[100]#u = 3.50
 
 taudach=numeric(0)
@@ -1741,10 +1742,239 @@ esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES995_garchsktnew_xts,alpha=0.
 esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES99_garchsktnew_xts,alpha=0.01)#0.5619296
 esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES95_garchsktnew_xts,alpha=0.05)#0.07076329
 
-###Verletzungen jedes Jahrs
-sum(VaR995_hs<dax_log_xts[1051:6826]) #  41 Ueberschreitungen
-sum(VaR99_hs<dax_log_xts[1051:6826]) #  80   Ueberschreitungen
-sum(VaR95_hs<dax_log_xts[1051:6826]) #  323 Ueberschreitungen
+###Multidays VaR
+length(dax_xts)
+length(dax_log_xts)
+-100*log(dax$Close[11]/dax$Close[1])
+sum(dax_log_xts[1:10])
+###Cheng et al. 2011 S.1160
+##h=10,T=6000,s=1:599,k=1:10 (in Literatur ist k=1:9)
+dax_log_xts6000=dax_log_xts[1:6000]
+#Subsample 1 k=1
+s1=numeric(0)
+sum(dax_log_xts6000[1:10])
+for (i in (1:599)){
+  s1[i]=sum(dax_log_xts6000[(10*i-9):(10*i)])
+}
+length(s1)
+head(s1)
+#Subsample 2 k=2
+s2=numeric(0)
+for (i in (1:599)){
+  s2[i]=sum(dax_log_xts6000[(10*i-8):(10*i+1)])
+}
+length(s2)
+head(s2)
+#Subsample 3 k=3
+s3=numeric(0)
+for (i in (1:599)){
+  s3[i]=sum(dax_log_xts6000[(10*i-7):(10*i+2)])
+}
+length(s3)
+head(s3)
+#Subsample 4 k=4
+s4=numeric(0)
+for (i in (1:599)){
+  s4[i]=sum(dax_log_xts6000[(10*i-6):(10*i+3)])
+}
+length(s4)
+head(s4)
+#Subsample 5 k=5
+s5=numeric(0)
+for (i in (1:599)){
+  s5[i]=sum(dax_log_xts6000[(10*i-5):(10*i+4)])
+}
+length(s5)
+head(s5)
+#Subsample 6 k=6
+s6=numeric(0)
+for (i in (1:599)){
+  s6[i]=sum(dax_log_xts6000[(10*i-4):(10*i+5)])
+}
+length(s6)
+head(s6)
+#Subsample 7 k=7
+s7=numeric(0)
+for (i in (1:599)){
+  s7[i]=sum(dax_log_xts6000[(10*i-3):(10*i+6)])
+}
+length(s7)
+head(s7)
+#Subsample 8 k=8
+s8=numeric(0)
+for (i in (1:599)){
+  s8[i]=sum(dax_log_xts6000[(10*i-2):(10*i+7)])
+}
+length(s8)
+head(s8)
+#Subsample 9 k=9
+s9=numeric(0)
+for (i in (1:599)){
+  s9[i]=sum(dax_log_xts6000[(10*i-1):(10*i+8)])
+}
+length(s9)
+head(s9)
+#Subsample 10 k=10
+s10=numeric(0)
+for (i in (1:599)){
+  s10[i]=sum(dax_log_xts6000[(10*i):(10*i+9)])
+}
+length(s10)
+head(s10)
 
-head(dax_log_xts[1051:6826])
-head(cc)
+#VaR(1) taeglich h=1
+quantile(dax_log_xts6000,0.95) #2.29 10^(0.5)*VaR(1)=7.23
+quantile(dax_log_xts6000,0.99) #4.31 10^(0.5)*VaR(1)=13.64
+quantile(dax_log_xts6000,0.995)#5.15 10^(0.5)*VaR(1)=16.28
+
+###VaR(h)=1/h*Sum_(k=1)^(k=10)VaR_k(h)
+##alpha=0.05
+(quantile(s1,0.95)+quantile(s2,0.95)+quantile(s3,0.95)+quantile(s4,0.95)+quantile(s5,0.95)+
+  quantile(s6,0.95)+quantile(s7,0.95)+quantile(s8,0.95)+quantile(s9,0.95)+quantile(s10,0.95))/10
+##6.75  S.1160 zeta(h)=7.11
+##alpha=0.01
+(quantile(s1,0.99)+quantile(s2,0.99)+quantile(s3,0.99)+quantile(s4,0.99)+quantile(s5,0.99)+
+  quantile(s6,0.99)+quantile(s7,0.99)+quantile(s8,0.99)+quantile(s9,0.99)+quantile(s10,0.99))/10
+##13.34  zeta(h)=2.25
+##alpha=0.005
+(quantile(s1,0.995)+quantile(s2,0.995)+quantile(s3,0.995)+quantile(s4,0.995)+quantile(s5,0.995)+
+  quantile(s6,0.995)+quantile(s7,0.995)+quantile(s8,0.995)+quantile(s9,0.995)+quantile(s10,0.995))/10
+##16.16 zeta(h)=0.74
+
+##h=30,T=6000,s=1:199,k=1:30 (in Literatur ist k=1:29)
+#Subsample 1 k=1
+s30=matrix(0,nrow=199,ncol=30)
+for (i in (1:199)){
+  s1_30[i]=sum(dax_log_xts6000[(30*i-29):(30*i)])
+}
+length(s1_30)
+head(s1_30)
+
+for (k in (1:30)){
+  for (i in (1:199)){
+    s30[i,k]=sum(dax_log_xts6000[(30*i-30+k):(30*i+k-1)])
+  }
+}
+s30
+
+s30[,1]
+
+#VaR(1) taeglich h=1
+quantile(dax_log_xts6000,0.95) #2.29 30^(0.5)*VaR(1)=12.53
+quantile(dax_log_xts6000,0.99) #4.31 30^(0.5)*VaR(1)=23.62
+quantile(dax_log_xts6000,0.995)#5.15 30^(0.5)*VaR(1)=28.19
+
+###VaR(h)=1/h*Sum_(k=1)^(k=10)VaR_k(h)
+##alpha=0.05
+(quantile(s30[,1],0.95)+quantile(s30[,2],0.95)+quantile(s30[,3],0.95)+quantile(s30[,4],0.95)+
+quantile(s30[,5],0.95)+quantile(s30[,6],0.95)+quantile(s30[,7],0.95)+quantile(s30[,8],0.95)+
+quantile(s30[,9],0.95)+quantile(s30[,10],0.95)+quantile(s30[,11],0.95)+quantile(s30[,12],0.95)+
+quantile(s30[,13],0.95)+quantile(s30[,14],0.95)+quantile(s30[,15],0.95)+quantile(s30[,16],0.95)+
+quantile(s30[,17],0.95)+quantile(s30[,18],0.95)+quantile(s30[,19],0.95)+quantile(s30[,20],0.95)+
+quantile(s30[,21],0.95)+quantile(s30[,22],0.95)+quantile(s30[,23],0.95)+quantile(s30[,24],0.95)+
+quantile(s30[,25],0.95)+quantile(s30[,26],0.95)+quantile(s30[,27],0.95)+quantile(s30[,28],0.95)+
+quantile(s30[,29],0.95)+quantile(s30[,30],0.95))/30
+##12.13 S.1160 zeta(h)=3.30
+##alpha=0.01
+(quantile(s30[,1],0.99)+quantile(s30[,2],0.99)+quantile(s30[,3],0.99)+quantile(s30[,4],0.99)+
+  quantile(s30[,5],0.99)+quantile(s30[,6],0.99)+quantile(s30[,7],0.99)+quantile(s30[,8],0.99)+
+  quantile(s30[,9],0.99)+quantile(s30[,10],0.99)+quantile(s30[,11],0.99)+quantile(s30[,12],0.99)+
+  quantile(s30[,13],0.99)+quantile(s30[,14],0.99)+quantile(s30[,15],0.99)+quantile(s30[,16],0.99)+
+  quantile(s30[,17],0.99)+quantile(s30[,18],0.99)+quantile(s30[,19],0.99)+quantile(s30[,20],0.99)+
+  quantile(s30[,21],0.99)+quantile(s30[,22],0.99)+quantile(s30[,23],0.99)+quantile(s30[,24],0.99)+
+  quantile(s30[,25],0.99)+quantile(s30[,26],0.99)+quantile(s30[,27],0.99)+quantile(s30[,28],0.99)+
+  quantile(s30[,29],0.99)+quantile(s30[,30],0.99))/30
+#22.87 zeta(h)=3.28
+##alpha=0.005
+(quantile(s30[,1],0.995)+quantile(s30[,2],0.995)+quantile(s30[,3],0.995)+quantile(s30[,4],0.995)+
+  quantile(s30[,5],0.995)+quantile(s30[,6],0.995)+quantile(s30[,7],0.995)+quantile(s30[,8],0.995)+
+  quantile(s30[,9],0.995)+quantile(s30[,10],0.995)+quantile(s30[,11],0.995)+quantile(s30[,12],0.995)+
+  quantile(s30[,13],0.995)+quantile(s30[,14],0.995)+quantile(s30[,15],0.995)+quantile(s30[,16],0.995)+
+  quantile(s30[,17],0.995)+quantile(s30[,18],0.995)+quantile(s30[,19],0.995)+quantile(s30[,20],0.995)+
+  quantile(s30[,21],0.995)+quantile(s30[,22],0.995)+quantile(s30[,23],0.995)+quantile(s30[,24],0.995)+
+  quantile(s30[,25],0.995)+quantile(s30[,26],0.995)+quantile(s30[,27],0.995)+quantile(s30[,28],0.995)+
+  quantile(s30[,29],0.995)+quantile(s30[,30],0.995))/30
+#25.55 zeta(h)=10.33
+
+##Variance-Ratio-Test (Cheng et al. 2011 S.1164)
+
+##k=1:10,h=10,
+VR10=((1-1/10)*acf(dax_log_xts6000)$acf[2]+(1-2/10)*acf(dax_log_xts6000)$acf[3]+
+  (1-3/10)*acf(dax_log_xts6000)$acf[4]+(1-4/10)*acf(dax_log_xts6000)$acf[5]+
+  (1-5/10)*acf(dax_log_xts6000)$acf[6]+(1-6/10)*acf(dax_log_xts6000)$acf[7]+
+  (1-7/10)*acf(dax_log_xts6000)$acf[8]+(1-8/10)*acf(dax_log_xts6000)$acf[9]+
+  (1-9/10)*acf(dax_log_xts6000)$acf[10])*2+1
+VR10 #0.8929
+
+##k=1:30,h=30
+VR30=((1-1/30)*acf(dax_log_xts6000)$acf[2]+(1-2/30)*acf(dax_log_xts6000)$acf[3]+
+        (1-3/30)*acf(dax_log_xts6000)$acf[4]+(1-4/30)*acf(dax_log_xts6000)$acf[5]+
+        (1-5/30)*acf(dax_log_xts6000)$acf[6]+(1-6/30)*acf(dax_log_xts6000)$acf[7]+
+        (1-7/30)*acf(dax_log_xts6000)$acf[8]+(1-8/30)*acf(dax_log_xts6000)$acf[9]+
+        (1-9/30)*acf(dax_log_xts6000)$acf[10]+(1-10/30)*acf(dax_log_xts6000)$acf[11]+
+  (1-11/30)*acf(dax_log_xts6000)$acf[12]+(1-12/30)*acf(dax_log_xts6000)$acf[13]+
+  (1-13/30)*acf(dax_log_xts6000)$acf[14]+(1-14/30)*acf(dax_log_xts6000)$acf[15]+
+  (1-15/30)*acf(dax_log_xts6000)$acf[16]+(1-16/30)*acf(dax_log_xts6000)$acf[17]+
+  (1-17/30)*acf(dax_log_xts6000)$acf[18]+(1-18/30)*acf(dax_log_xts6000)$acf[19]+
+  (1-19/30)*acf(dax_log_xts6000)$acf[20]+(1-20/30)*acf(dax_log_xts6000)$acf[21]+
+  (1-21/30)*acf(dax_log_xts6000)$acf[22]+(1-22/30)*acf(dax_log_xts6000)$acf[23]+
+  (1-23/30)*acf(dax_log_xts6000)$acf[24]+(1-24/30)*acf(dax_log_xts6000)$acf[25]+
+  (1-25/30)*acf(dax_log_xts6000)$acf[26]+(1-26/30)*acf(dax_log_xts6000)$acf[27]+
+  (1-27/30)*acf(dax_log_xts6000)$acf[28]+(1-28/30)*acf(dax_log_xts6000)$acf[29]+
+  (1-29/30)*acf(dax_log_xts6000)$acf[30])*2+1
+VR30 #0.8968
+
+###delta_k (S.1164) k=1:30
+mudach=mean(dax_log_xts6000)
+delta_k=numeric(0)
+kj=numeric(0)
+for (k in (1:30)){
+  for (i in ((k+1):6000)){
+#delta_k[k]=(sum((-dax_log$logreturn[i]-mudach)^2))^(-2)*sum((-dax_log$logreturn[i]-mudach)^2*(-dax_log$logreturn[i-k]-mudach)^2)*length(dax_log_xts6000)
+   kj[i-k]=(-dax_log$logreturn[i]-mudach)^2*(-dax_log$logreturn[i-k]-mudach)^2
+   delta_k[k]=sum(kj)*6000*(var(dax_log_xts6000)*5999)^(-2)
+    }
+}
+delta_k
+
+#vv=numeric(0)
+#for (s in (1:6000)){
+#vv[s]=(-dax_log$logreturn[s]-mudach)^2  
+#}
+#sum(vv)
+
+vartheta10=((1-1/10)^2*delta_k[1]+(1-2/10)^2*delta_k[2]+
+              (1-3/10)^2*delta_k[3]+(1-4/10)^2*delta_k[4]+
+              (1-5/10)^2*delta_k[5]+(1-6/10)^2*delta_k[6]+
+              (1-7/10)^2*delta_k[7]+(1-8/10)^2*delta_k[8]+
+              (1-9/10)^2*delta_k[9])*4
+vartheta10
+
+vartheta30=((1-1/30)^2*delta_k[1]+(1-2/30)^2*delta_k[2]+
+            (1-3/30)^2*delta_k[3]+(1-4/30)^2*delta_k[4]+
+            (1-5/30)^2*delta_k[5]+(1-6/30)^2*delta_k[6]+
+            (1-7/30)^2*delta_k[7]+(1-8/30)^2*delta_k[8]+
+            (1-9/30)^2*delta_k[9]+(1-10/30)^2*delta_k[10]+
+            (1-11/30)^2*delta_k[11]+(1-12/30)^2*delta_k[12]+
+            (1-13/30)^2*delta_k[13]+(1-14/30)^2*delta_k[14]+
+            (1-15/30)^2*delta_k[15]+(1-16/30)^2*delta_k[16]+
+            (1-17/30)^2*delta_k[17]+(1-18/30)^2*delta_k[18]+
+            (1-19/30)^2*delta_k[19]+(1-20/30)^2*delta_k[20]+
+            (1-21/30)^2*delta_k[21]+(1-22/30)^2*delta_k[22]+
+            (1-23/30)^2*delta_k[23]+(1-24/30)^2*delta_k[24]+
+            (1-25/30)^2*delta_k[25]+(1-26/30)^2*delta_k[26]+
+            (1-27/30)^2*delta_k[27]+(1-28/30)^2*delta_k[28]+
+            (1-29/30)^2*delta_k[29])*4
+vartheta30
+
+psi10=sqrt(10)*(VR10-1)/sqrt(vartheta10)
+psi10  #-0.06
+
+psi30=sqrt(30)*(VR30-1)/sqrt(vartheta30)
+psi30  #-0.0
+
+Lo.Mac(dax_log_xts6000,kvec=c(10,30))
+
+
+
+
