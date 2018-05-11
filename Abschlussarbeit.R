@@ -1844,11 +1844,11 @@ quantile(dax_log_xts6000,0.995)#5.15 10^(0.5)*VaR(1)=16.28
 ##h=30,T=6000,s=1:199,k=1:30 (in Literatur ist k=1:29)
 #Subsample 1 k=1
 s30=matrix(0,nrow=199,ncol=30)
-for (i in (1:199)){
-  s1_30[i]=sum(dax_log_xts6000[(30*i-29):(30*i)])
-}
-length(s1_30)
-head(s1_30)
+#for (i in (1:199)){
+#  s1_30[i]=sum(dax_log_xts6000[(30*i-29):(30*i)])
+#}
+#length(s1_30)
+#head(s1_30)
 
 for (k in (1:30)){
   for (i in (1:199)){
@@ -1925,17 +1925,16 @@ VR30=((1-1/30)*acf(dax_log_xts6000)$acf[2]+(1-2/30)*acf(dax_log_xts6000)$acf[3]+
 VR30 #0.8968
 
 ###delta_k (S.1164) k=1:30
-mudach=mean(dax_log_xts6000)
-delta_k=numeric(0)
-kj=numeric(0)
-for (k in (1:30)){
-  for (i in ((k+1):6000)){
-#delta_k[k]=(sum((-dax_log$logreturn[i]-mudach)^2))^(-2)*sum((-dax_log$logreturn[i]-mudach)^2*(-dax_log$logreturn[i-k]-mudach)^2)*length(dax_log_xts6000)
-   kj[i-k]=(-dax_log$logreturn[i]-mudach)^2*(-dax_log$logreturn[i-k]-mudach)^2
-   delta_k[k]=sum(kj)*6000*(var(dax_log_xts6000)*5999)^(-2)
-    }
-}
-delta_k
+#mudach=mean(dax_log_xts6000)
+#delta_k=numeric(0)
+#kj=numeric(0)
+#for (k in (1:30)){
+#  for (i in ((k+1):6000)){
+#   kj[i-k]=(-dax_log$logreturn[i]-mudach)^2*(-dax_log$logreturn[i-k]-mudach)^2
+#   delta_k[k]=sum(kj)*6000*(var(dax_log_xts6000)*5999)^(-2)
+#    }
+#}
+#delta_k
 
 #vv=numeric(0)
 #for (s in (1:6000)){
@@ -1943,38 +1942,150 @@ delta_k
 #}
 #sum(vv)
 
-vartheta10=((1-1/10)^2*delta_k[1]+(1-2/10)^2*delta_k[2]+
-              (1-3/10)^2*delta_k[3]+(1-4/10)^2*delta_k[4]+
-              (1-5/10)^2*delta_k[5]+(1-6/10)^2*delta_k[6]+
-              (1-7/10)^2*delta_k[7]+(1-8/10)^2*delta_k[8]+
-              (1-9/10)^2*delta_k[9])*4
-vartheta10
+#vartheta10=((1-1/10)^2*delta_k[1]+(1-2/10)^2*delta_k[2]+
+#              (1-3/10)^2*delta_k[3]+(1-4/10)^2*delta_k[4]+
+#              (1-5/10)^2*delta_k[5]+(1-6/10)^2*delta_k[6]+
+#              (1-7/10)^2*delta_k[7]+(1-8/10)^2*delta_k[8]+
+#              (1-9/10)^2*delta_k[9])*4
+#vartheta10
 
-vartheta30=((1-1/30)^2*delta_k[1]+(1-2/30)^2*delta_k[2]+
-            (1-3/30)^2*delta_k[3]+(1-4/30)^2*delta_k[4]+
-            (1-5/30)^2*delta_k[5]+(1-6/30)^2*delta_k[6]+
-            (1-7/30)^2*delta_k[7]+(1-8/30)^2*delta_k[8]+
-            (1-9/30)^2*delta_k[9]+(1-10/30)^2*delta_k[10]+
-            (1-11/30)^2*delta_k[11]+(1-12/30)^2*delta_k[12]+
-            (1-13/30)^2*delta_k[13]+(1-14/30)^2*delta_k[14]+
-            (1-15/30)^2*delta_k[15]+(1-16/30)^2*delta_k[16]+
-            (1-17/30)^2*delta_k[17]+(1-18/30)^2*delta_k[18]+
-            (1-19/30)^2*delta_k[19]+(1-20/30)^2*delta_k[20]+
-            (1-21/30)^2*delta_k[21]+(1-22/30)^2*delta_k[22]+
-            (1-23/30)^2*delta_k[23]+(1-24/30)^2*delta_k[24]+
-            (1-25/30)^2*delta_k[25]+(1-26/30)^2*delta_k[26]+
-            (1-27/30)^2*delta_k[27]+(1-28/30)^2*delta_k[28]+
-            (1-29/30)^2*delta_k[29])*4
-vartheta30
+#vartheta30=((1-1/30)^2*delta_k[1]+(1-2/30)^2*delta_k[2]+
+#            (1-3/30)^2*delta_k[3]+(1-4/30)^2*delta_k[4]+
+#            (1-5/30)^2*delta_k[5]+(1-6/30)^2*delta_k[6]+
+#            (1-7/30)^2*delta_k[7]+(1-8/30)^2*delta_k[8]+
+#            (1-9/30)^2*delta_k[9]+(1-10/30)^2*delta_k[10]+
+#            (1-11/30)^2*delta_k[11]+(1-12/30)^2*delta_k[12]+
+#            (1-13/30)^2*delta_k[13]+(1-14/30)^2*delta_k[14]+
+#            (1-15/30)^2*delta_k[15]+(1-16/30)^2*delta_k[16]+
+#            (1-17/30)^2*delta_k[17]+(1-18/30)^2*delta_k[18]+
+#            (1-19/30)^2*delta_k[19]+(1-20/30)^2*delta_k[20]+
+#            (1-21/30)^2*delta_k[21]+(1-22/30)^2*delta_k[22]+
+#            (1-23/30)^2*delta_k[23]+(1-24/30)^2*delta_k[24]+
+#            (1-25/30)^2*delta_k[25]+(1-26/30)^2*delta_k[26]+
+#            (1-27/30)^2*delta_k[27]+(1-28/30)^2*delta_k[28]+
+#            (1-29/30)^2*delta_k[29])*4
+#vartheta30
 
-psi10=sqrt(10)*(VR10-1)/sqrt(vartheta10)
-psi10  #-0.06
+#psi10=sqrt(10)*(VR10-1)/sqrt(vartheta10)
+#psi10  #-0.06
 
-psi30=sqrt(30)*(VR30-1)/sqrt(vartheta30)
-psi30  #-0.0
+#psi30=sqrt(30)*(VR30-1)/sqrt(vartheta30)
+#psi30  #-0.0
 
-Lo.Mac(dax_log_xts6000,kvec=c(10,30))
+#Lo-Mackinlay Test (Cheng et al. 2011 S.1164 und Lo, Mackinlay 1988 S.50) 
+Lo.Mac(dax_log_xts6000,kvec=c(10,30))  
+2*pnorm(-1.5576643)   #h=10,p=0.12
+2*pnorm(-0.8459866)   #h=30,p=0.40
+
+#subsample-based Test (Cheng et al. 2011 S.1164)
+dax_log_xts6000
+daxmat10=matrix(0,nrow=10,ncol=5991)
+for(i in (1:5991)){
+  daxmat10[,i]=dax_log_xts6000[i:(i+9)]
+}
+#dax_log_xts6000[1:20]
+#daxmat10[,1:2]
+ccc=matrix(0,nrow=600,ncol=5000)
+resam=matrix(0,nrow=6000,ncol=5000)
+var500095=numeric(0)
+var500099=numeric(0)
+var5000995=numeric(0)
+varh500095=numeric(0)
+varh500099=numeric(0)
+varh5000995=numeric(0)
+for (i in 1:5000){
+  ccc[,i]=sample(c(1:5991),600,replace = FALSE)
+  resam[,i]=daxmat10[,ccc[,i]]
+  var500095[i]=quantile(resam[,i],0.95)
+  var500099[i]=quantile(resam[,i],0.99)
+  var5000995[i]=quantile(resam[,i],0.995)
+}
+
+#h=30
+sh30=array(0,c(199,30,5000))  #199=nrow, 30=ncol, 5000=n Wiederholung
+for (q in 1:5000){
+  for (k in (1:30)){
+    for (i in (1:199)){
+      sh30[i,k,q]=sum(resam[,q][(30*i-30+k):(30*i+k-1)])
+    }
+  }
+}
+
+for (q in 1:5000){
+ varh500095[q]= (quantile(sh30[,1,q],0.95)+quantile(sh30[,2,q],0.95)+quantile(sh30[,3,q],0.95)+quantile(sh30[,4,q],0.95)+
+     quantile(sh30[,5,q],0.95)+quantile(sh30[,6,q],0.95)+quantile(sh30[,7,q],0.95)+quantile(sh30[,8,q],0.95)+
+     quantile(sh30[,9,q],0.95)+quantile(sh30[,10,q],0.95)+quantile(sh30[,11,q],0.95)+quantile(sh30[,12,q],0.95)+
+     quantile(sh30[,13,q],0.95)+quantile(sh30[,14,q],0.95)+quantile(sh30[,15,q],0.95)+quantile(sh30[,16,q],0.95)+
+     quantile(sh30[,17,q],0.95)+quantile(sh30[,18,q],0.95)+quantile(sh30[,19,q],0.95)+quantile(sh30[,20,q],0.95)+
+     quantile(sh30[,21,q],0.95)+quantile(sh30[,22,q],0.95)+quantile(sh30[,23,q],0.95)+quantile(sh30[,24,q],0.95)+
+     quantile(sh30[,25,q],0.95)+quantile(sh30[,26,q],0.95)+quantile(sh30[,27,q],0.95)+quantile(sh30[,28,q],0.95)+
+     quantile(sh30[,29,q],0.95)+quantile(sh30[,30,q],0.95))/30
+ varh500099[q]= (quantile(sh30[,1,q],0.99)+quantile(sh30[,2,q],0.99)+quantile(sh30[,3,q],0.99)+quantile(sh30[,4,q],0.99)+
+                   quantile(sh30[,5,q],0.99)+quantile(sh30[,6,q],0.99)+quantile(sh30[,7,q],0.99)+quantile(sh30[,8,q],0.99)+
+                   quantile(sh30[,9,q],0.99)+quantile(sh30[,10,q],0.99)+quantile(sh30[,11,q],0.99)+quantile(sh30[,12,q],0.99)+
+                   quantile(sh30[,13,q],0.99)+quantile(sh30[,14,q],0.99)+quantile(sh30[,15,q],0.99)+quantile(sh30[,16,q],0.99)+
+                   quantile(sh30[,17,q],0.99)+quantile(sh30[,18,q],0.99)+quantile(sh30[,19,q],0.99)+quantile(sh30[,20,q],0.99)+
+                   quantile(sh30[,21,q],0.99)+quantile(sh30[,22,q],0.99)+quantile(sh30[,23,q],0.99)+quantile(sh30[,24,q],0.99)+
+                   quantile(sh30[,25,q],0.99)+quantile(sh30[,26,q],0.99)+quantile(sh30[,27,q],0.99)+quantile(sh30[,28,q],0.99)+
+                   quantile(sh30[,29,q],0.99)+quantile(sh30[,30,q],0.99))/30
+ varh5000995[q]= (quantile(sh30[,1,q],0.995)+quantile(sh30[,2,q],0.995)+quantile(sh30[,3,q],0.995)+quantile(sh30[,4,q],0.995)+
+                   quantile(sh30[,5,q],0.995)+quantile(sh30[,6,q],0.995)+quantile(sh30[,7,q],0.995)+quantile(sh30[,8,q],0.995)+
+                   quantile(sh30[,9,q],0.995)+quantile(sh30[,10,q],0.995)+quantile(sh30[,11,q],0.995)+quantile(sh30[,12,q],0.995)+
+                   quantile(sh30[,13,q],0.995)+quantile(sh30[,14,q],0.995)+quantile(sh30[,15,q],0.995)+quantile(sh30[,16,q],0.995)+
+                   quantile(sh30[,17,q],0.995)+quantile(sh30[,18,q],0.995)+quantile(sh30[,19,q],0.995)+quantile(sh30[,20,q],0.995)+
+                   quantile(sh30[,21,q],0.995)+quantile(sh30[,22,q],0.995)+quantile(sh30[,23,q],0.995)+quantile(sh30[,24,q],0.995)+
+                   quantile(sh30[,25,q],0.995)+quantile(sh30[,26,q],0.995)+quantile(sh30[,27,q],0.995)+quantile(sh30[,28,q],0.995)+
+                   quantile(sh30[,29,q],0.995)+quantile(sh30[,30,q],0.995))/30
+}
 
 
+v95=sqrt(30)*var500095-varh500095
+v99=sqrt(30)*var500099-varh500099
+v995=sqrt(30)*var5000995-varh5000995
+
+a95=sqrt(30)*quantile(dax_log_xts6000,0.95)-12.13 #0.397
+a99=sqrt(30)*quantile(dax_log_xts6000,0.99)-22.87 #0.747
+a995=sqrt(30)*quantile(dax_log_xts6000,0.995)-25.55  #2.645
+
+#Teststatistik.nicht signifikant
+a95/sd(v95) #0.3891233 
+a99/sd(v99) #0.3603125 
+a995/sd(v995) #1.072735 
+
+#h=10
+sh10=array(0,c(599,10,5000))  #599=nrow, 10=ncol, 5000=n Wiederholung
+for (q in 1:5000){
+  for (k in (1:10)){
+    for (i in (1:599)){
+      sh10[i,k,q]=sum(resam[,q][(10*i-10+k):(10*i+k-1)])
+    }
+  }
+}
+
+for (q in 1:5000){
+  varh5000951[q]= (quantile(sh10[,1,q],0.95)+quantile(sh10[,2,q],0.95)+quantile(sh10[,3,q],0.95)+quantile(sh10[,4,q],0.95)+
+                    quantile(sh10[,5,q],0.95)+quantile(sh10[,6,q],0.95)+quantile(sh10[,7,q],0.95)+quantile(sh10[,8,q],0.95)+
+                    quantile(sh10[,9,q],0.95)+quantile(sh10[,10,q],0.95))/10
+  varh5000991[q]= (quantile(sh10[,1,q],0.99)+quantile(sh10[,2,q],0.99)+quantile(sh10[,3,q],0.99)+quantile(sh10[,4,q],0.99)+
+                    quantile(sh10[,5,q],0.99)+quantile(sh10[,6,q],0.99)+quantile(sh10[,7,q],0.99)+quantile(sh10[,8,q],0.99)+
+                    quantile(sh10[,9,q],0.99)+quantile(sh10[,10,q],0.99))/10
+  varh50009951[q]= (quantile(sh10[,1,q],0.995)+quantile(sh10[,2,q],0.995)+quantile(sh10[,3,q],0.995)+quantile(sh10[,4,q],0.995)+
+                     quantile(sh10[,5,q],0.995)+quantile(sh10[,6,q],0.995)+quantile(sh10[,7,q],0.995)+quantile(sh10[,8,q],0.995)+
+                     quantile(sh10[,9,q],0.995)+quantile(sh10[,10,q],0.995))/10
+}
+
+
+v951=sqrt(10)*var500095-varh5000951
+v991=sqrt(10)*var500099-varh5000991
+v9951=sqrt(10)*var5000995-varh50009951
+
+a951=sqrt(10)*quantile(dax_log_xts6000,0.95)-6.75 #0.4826
+a991=sqrt(10)*quantile(dax_log_xts6000,0.99)-13.34 #0.2954
+a9951=sqrt(10)*quantile(dax_log_xts6000,0.995)-16.16  #0.1182
+
+#Teststatistik.nicht signifikant
+a951/sd(v951) #1.53 
+a991/sd(v991) #0.33 
+a9951/sd(v9951) #0.10 
 
 
