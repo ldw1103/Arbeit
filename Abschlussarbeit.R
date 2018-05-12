@@ -2048,9 +2048,9 @@ a99=sqrt(30)*quantile(dax_log_xts6000,0.99)-22.87 #0.747
 a995=sqrt(30)*quantile(dax_log_xts6000,0.995)-25.55  #2.645
 
 #Teststatistik.nicht signifikant
-a95/sd(v95) #0.3891233 
-a99/sd(v99) #0.3603125 
-a995/sd(v995) #1.072735 
+a95/sd(v95) #0.3968592 
+a99/sd(v99) #0.365556 
+a995/sd(v995) #1.093408 
 
 #h=10
 sh10=array(0,c(599,10,5000))  #599=nrow, 10=ncol, 5000=n Wiederholung
@@ -2088,4 +2088,20 @@ a951/sd(v951) #1.53
 a991/sd(v991) #0.33 
 a9951/sd(v9951) #0.10 
 
+###Modifizierte Square-Root-of-Time
+#h=10
+mvar9510=sqrt(10*VR10)*quantile(dax_log_xts6000,0.95)  #6.834407
+mvar9910=sqrt(10*VR10)*quantile(dax_log_xts6000,0.99)  #12.88453
+mvar99510=sqrt(10*VR10)*quantile(dax_log_xts6000,0.995)  #15.38185
+(6.83-6.75)/sd(v951)    #0.25
+(12.88453-13.34)/sd(v991) #-0.50
+(15.38185-16.16)/sd(v9951) #-0.65
+#h=30
+mvar9530=sqrt(30*VR10)*quantile(dax_log_xts6000,0.95)  #11.83754
+mvar9930=sqrt(30*VR10)*quantile(dax_log_xts6000,0.99)  #22.31666
+mvar99530=sqrt(30*VR10)*quantile(dax_log_xts6000,0.995)  #26.64214
+(11.84-12.13)/sd(v951)    #-0.9185983
+(22.32-22.87)/sd(v991) #-0.6058619
+(26.64-25.55)/sd(v9951) #0.9100645
+##nicht signifikant, bittet keine Verbesserung. Die Ergebnisse decken sich mit Cheng et al.2011
 
