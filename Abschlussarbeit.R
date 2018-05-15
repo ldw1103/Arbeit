@@ -1874,7 +1874,7 @@ quantile(s30[,17],0.95)+quantile(s30[,18],0.95)+quantile(s30[,19],0.95)+quantile
 quantile(s30[,21],0.95)+quantile(s30[,22],0.95)+quantile(s30[,23],0.95)+quantile(s30[,24],0.95)+
 quantile(s30[,25],0.95)+quantile(s30[,26],0.95)+quantile(s30[,27],0.95)+quantile(s30[,28],0.95)+
 quantile(s30[,29],0.95)+quantile(s30[,30],0.95))/30
-##12.13 S.1160 zeta(h)=3.30
+##12.13 S.1160 zeta(h)=100*((12.53/12.13)-1)=3.30
 ##alpha=0.01
 (quantile(s30[,1],0.99)+quantile(s30[,2],0.99)+quantile(s30[,3],0.99)+quantile(s30[,4],0.99)+
   quantile(s30[,5],0.99)+quantile(s30[,6],0.99)+quantile(s30[,7],0.99)+quantile(s30[,8],0.99)+
@@ -2048,9 +2048,12 @@ a99=sqrt(30)*quantile(dax_log_xts6000,0.99)-22.87 #0.747
 a995=sqrt(30)*quantile(dax_log_xts6000,0.995)-25.55  #2.645
 
 #Teststatistik.nicht signifikant
-a95/sd(v95) #0.3968592 
-a99/sd(v99) #0.365556 
-a995/sd(v995) #1.093408 
+a95/sd(v95) #0.40 
+a99/sd(v99) #0.37 
+a995/sd(v995) #1.09
+2*(1-pnorm(0.40)) #0.69
+2*(1-pnorm(0.37)) #0.71
+2*(1-pnorm(1.09)) #0.28
 
 #h=10
 sh10=array(0,c(599,10,5000))  #599=nrow, 10=ncol, 5000=n Wiederholung
@@ -2087,21 +2090,48 @@ a9951=sqrt(10)*quantile(dax_log_xts6000,0.995)-16.16  #0.1182
 a951/sd(v951) #1.53 
 a991/sd(v991) #0.33 
 a9951/sd(v9951) #0.10 
+2*(1-pnorm(1.53)) #0.13
+2*(1-pnorm(0.33)) #0.74
+2*(1-pnorm(0.10)) #0.92
 
 ###Modifizierte Square-Root-of-Time
 #h=10
-mvar9510=sqrt(10*VR10)*quantile(dax_log_xts6000,0.95)  #6.834407
-mvar9910=sqrt(10*VR10)*quantile(dax_log_xts6000,0.99)  #12.88453
-mvar99510=sqrt(10*VR10)*quantile(dax_log_xts6000,0.995)  #15.38185
+mvar9510=sqrt(10*VR10)*quantile(dax_log_xts6000,0.95)  #6.83
+mvar9910=sqrt(10*VR10)*quantile(dax_log_xts6000,0.99)  #12.88
+mvar99510=sqrt(10*VR10)*quantile(dax_log_xts6000,0.995)  #15.38
+##zeta(30)
+(6.83/6.75-1)*100 #1.19
+(12.88/13.34-1)*100 #-3.45
+(15.38/16.16-1)*100 #-4.83
+
+#subsample-based test
 (6.83-6.75)/sd(v951)    #0.25
 (12.88453-13.34)/sd(v991) #-0.50
 (15.38185-16.16)/sd(v9951) #-0.65
+2*(1-pnorm(0.25)) #0.80
+2*pnorm(-0.50) #0.62
+2*pnorm(-0.65)#0.52
+
+
 #h=30
-mvar9530=sqrt(30*VR10)*quantile(dax_log_xts6000,0.95)  #11.83754
-mvar9930=sqrt(30*VR10)*quantile(dax_log_xts6000,0.99)  #22.31666
-mvar99530=sqrt(30*VR10)*quantile(dax_log_xts6000,0.995)  #26.64214
-(11.84-12.13)/sd(v951)    #-0.9185983
-(22.32-22.87)/sd(v991) #-0.6058619
-(26.64-25.55)/sd(v9951) #0.9100645
-##nicht signifikant, bittet keine Verbesserung. Die Ergebnisse decken sich mit Cheng et al.2011
+mvar9530=sqrt(30*VR10)*quantile(dax_log_xts6000,0.95)  #11.84
+mvar9930=sqrt(30*VR10)*quantile(dax_log_xts6000,0.99)  #22.32
+mvar99530=sqrt(30*VR10)*quantile(dax_log_xts6000,0.995)  #26.64
+#zeta(30)
+(11.84/12.13-1)*100 #-2.39
+(22.32/22.87-1)*100 #-2.40
+(26.64/25.55-1)*100 #4.27
+
+#subsample-based test
+(11.84-12.13)/sd(v951)    #-0.92
+(22.32-22.87)/sd(v991) #-0.61
+(26.64-25.55)/sd(v9951) #0.91
+2*pnorm(-0.92)#0.38
+2*pnorm(-0.61)#0.54
+2*(1-pnorm(0.91)) #0.36
+
+##nicht signifikant, bietet kleine Verbesserung. Die Ergebnisse decken sich mit Cheng et al.2011
+
+###Tail-Index Based Skalierung (Vries 1998, Jon Danielsson 2011)
+
 
