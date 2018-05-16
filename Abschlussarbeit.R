@@ -16,7 +16,7 @@ library(forecast)
 library(evir)   #auch Extremwerttheorie
 library(esback)  #ES backtesting
 library(fGarch) #garch
-library("vrtest") #Variance Ratio Test
+library(vrtest) #Variance Ratio Test
 
 #Daten Einlesen
 daten=read.csv("DAX.csv") #Quelle: finance.yahoo.com
@@ -1993,6 +1993,9 @@ var5000995=numeric(0)
 varh500095=numeric(0)
 varh500099=numeric(0)
 varh5000995=numeric(0)
+varh5000951=numeric(0)
+varh5000991=numeric(0)
+varh50009951=numeric(0)
 for (i in 1:5000){
   ccc[,i]=sample(c(1:5991),600,replace = FALSE)
   resam[,i]=daxmat10[,ccc[,i]]
@@ -2099,18 +2102,23 @@ a9951/sd(v9951) #0.10
 mvar9510=sqrt(10*VR10)*quantile(dax_log_xts6000,0.95)  #6.83
 mvar9910=sqrt(10*VR10)*quantile(dax_log_xts6000,0.99)  #12.88
 mvar99510=sqrt(10*VR10)*quantile(dax_log_xts6000,0.995)  #15.38
-##zeta(30)
+
+##zeta(10)
 (6.83/6.75-1)*100 #1.19
 (12.88/13.34-1)*100 #-3.45
 (15.38/16.16-1)*100 #-4.83
 
 #subsample-based test
-(6.83-6.75)/sd(v951)    #0.25
-(12.88453-13.34)/sd(v991) #-0.50
-(15.38185-16.16)/sd(v9951) #-0.65
-2*(1-pnorm(0.25)) #0.80
-2*pnorm(-0.50) #0.62
-2*pnorm(-0.65)#0.52
+v951m=sqrt(10*VR10)*var500095-varh5000951
+v991m=sqrt(10*VR10)*var500099-varh5000991
+v9951m=sqrt(10*VR10)*var5000995-varh50009951
+
+(6.83-6.75)/sd(v951m)    #0.26
+(12.88453-13.34)/sd(v991m) #-0.53
+(15.38185-16.16)/sd(v9951m) #-0.67
+2*(1-pnorm(0.26)) #0.79
+2*pnorm(-0.53) #0.60
+2*pnorm(-0.67)#0.50
 
 
 #h=30
@@ -2123,15 +2131,59 @@ mvar99530=sqrt(30*VR10)*quantile(dax_log_xts6000,0.995)  #26.64
 (26.64/25.55-1)*100 #4.27
 
 #subsample-based test
-(11.84-12.13)/sd(v951)    #-0.92
-(22.32-22.87)/sd(v991) #-0.61
-(26.64-25.55)/sd(v9951) #0.91
-2*pnorm(-0.92)#0.38
-2*pnorm(-0.61)#0.54
-2*(1-pnorm(0.91)) #0.36
+v95m=sqrt(30*VR10)*var500095-varh500095
+v99m=sqrt(30*VR10)*var500099-varh500099
+v995m=sqrt(30*VR10)*var5000995-varh5000995
 
-##nicht signifikant, bietet kleine Verbesserung. Die Ergebnisse decken sich mit Cheng et al.2011
+(11.84-12.13)/sd(v95m)    #-0.29
+(22.32-22.87)/sd(v99m) #-0.27
+(26.64-25.55)/sd(v995m) #0.45
+2*pnorm(-0.29)#0.77
+2*pnorm(-0.27)#0.79
+2*(1-pnorm(0.45)) #0.65
+
+##nicht signifikant, bietet Verbesserung. Die Ergebnisse decken sich mit Cheng et al.2011
 
 ###Tail-Index Based Skalierung (Vries 1998, Jon Danielsson 2011)
+#h=10
+tvar9510=10^(1/3.5)*quantile(dax_log_xts6000,0.95)  #4.42
+tvar9910=10^(1/3.5)*quantile(dax_log_xts6000,0.99)  #8.32
+tvar99510=10^(1/3.5)*quantile(dax_log_xts6000,0.995)  #9.94
+#zeta(10)
+(4.42/6.75-1)*100 #-34.52
+(8.32/13.34-1)*100 #-37.63
+(9.94/16.16-1)*100 #-38.49
 
+#subsample-based test
+v951t=10^(1/3.5)*var500095-varh5000951
+v991t=10^(1/3.5)*var500099-varh5000991
+v9951t=10^(1/3.5)*var5000995-varh50009951
 
+(4.42-6.75)/sd(v951t)    #-6.95
+(8.32-13.34)/sd(v991t) #-5.93
+(9.94-16.16)/sd(v9951t) #-5.17
+2*pnorm(-6.95) #0.00
+2*pnorm(-5.93) #0.00
+2*pnorm(-5.17)#0.00
+
+#h=30
+tvar9530=30^(1/3.5)*quantile(dax_log_xts6000,0.95)  #6.04
+tvar9930=30^(1/3.5)*quantile(dax_log_xts6000,0.99)  #11.39
+tvar99530=30^(1/3.5)*quantile(dax_log_xts6000,0.995)  #13.60
+
+#zeta(30)
+(6.04/12.13-1)*100 #-50.21
+(11.39/22.87-1)*100 #-50.20
+(13.60/25.55-1)*100 #-46.77
+
+#subsample-based test
+v95t=30^(1/3.5)*var500095-varh500095
+v99t=30^(1/3.5)*var500099-varh500099
+v995t=30^(1/3.5)*var5000995-varh5000995
+
+(6.04-12.13)/sd(v95t)    #-5.63
+(11.39-22.87)/sd(v99t) #-5.84
+(13.60-25.55)/sd(v995t) #-4.82
+2*pnorm(-5.63) #0.00
+2*pnorm(-5.84) #0.00
+2*pnorm(-4.82)#0.00
