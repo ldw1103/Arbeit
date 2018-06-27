@@ -10,6 +10,8 @@
 #install.packages("esback")
 #install.packages("vrtest")
 #install.packages("devtools")
+#install.packages("ggplot2")
+#install.packages("grid")
 #devtools::install_github("BayerSe/esreg")
 #devtools::install_github("BayerSe/esback")
 library(extRemes) #Extremwerttheorie
@@ -23,6 +25,8 @@ library(forecast)  #time series forecasting
 library(evir)   #auch Extremwerttheorie
 library(esback)  #ES backtesting
 library(vrtest) #Variance Ratio Test
+library(ggplot2) #zeichnen
+library(grid)    #Lokation von ggplots2
 
 #Daten Einlesen
 setwd("~/")
@@ -123,73 +127,13 @@ return.level(fit_monatmax, conf = 0.05, return.period= c(2,5,10,20,50))
 return.level(fit_monatmax_lm, conf = 0.05, return.period= c(2,5,10,20,50))
 fit_monatmax$results$par
 
-# Monatlich Moving Window (Groesse=1000) Zum Beispiel: das erste Fenster
-#ts_bm_1=dax_log_xts[1:1000]
-#monatmax1=apply.monthly(ts_bm_1,max)   #die groessete monatliche Verlust
-#monatmax1
-#plot(monatmax1)
-#fit_monat1 <- fevd(as.vector(monatmax1), method = "MLE", type="GEV")  #MLE um Parameter zu schaetzen
-#plot(fit_monat1)         #passt
-#fit_monat1$results$par  #Parameter extrahieren 
-
-# VaRs berechnen
-#VaR95_bmm=numeric(0)
-#VaR99_bmm=numeric(0)
-#VaR995_bmm=numeric(0)
-#monatmax=numeric(0)
-#fit=numeric(0)
-#for (i in (1:5826)){         #es gibt (6826-1000) Vorhersagen
-#  monatmax=apply.monthly(dax_log_xts[i:(i+999)],max)    #die groessete monatliche Verlust
-#  fit <- fevd(as.vector(monatmax), method = "Lmoments", type="GEV")
-#  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 10.4833)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 20
-#  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 5.4917)[1]  
-#  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.5588)[1]
-#  }
-#
-#VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[1001:6826])
-#VaR99_bmm_xts=xts(VaR99_bmm,dax_log$date[1001:6826])
-#VaR95_bmm_xts=xts(VaR95_bmm,dax_log$date[1001:6826]) 
-
-#plot(dax_log_xts[1001:6826])  
-#lines(VaR995_bmm_xts,col="red")   
-#lines(VaR99_bmm_xts,col="blue")    
-#lines(VaR95_bmm_xts,col="green")   
-#sum(VaR995_bmm_xts<dax_log_xts[1001:6826]) #  60 Ueberschreitungen
-#sum(VaR99_bmm_xts<dax_log_xts[1001:6826]) #  109 Ueberschreitungen
-#sum(VaR95_bmm_xts<dax_log_xts[1001:6826]) #  494 Ueberschreitungen
-
-#Quartal
-#VaR95_bmm=numeric(0)
-#VaR99_bmm=numeric(0)
-#VaR995_bmm=numeric(0)
-#quartalmax=numeric(0)
-#fit=numeric(0)
-#for (i in (1:5826)){         #es gibt (6826-1000) Vorhersagen
-#  quartalmax=apply.quarterly(dax_log_xts[i:(i+999)],max)    #die groessete quartalliche Verlust
-#  fit <- fevd(as.vector(quartalmax), method = "Lmoments", type="GEV")
-#  VaR995_bmm[i]=return.level(fit, conf = 0.05, return.period= 3.8500)[1] #Umrechnung zwischen r.p und Quantil, Siehe Longin2000, Mcneil1998. (1-p)^n=(1-1/k). Hier n = 60
-#  VaR99_bmm[i]=return.level(fit, conf = 0.05, return.period= 2.2083)[1]  
-#  VaR95_bmm[i]=return.level(fit, conf = 0.05, return.period= 1.0483)[1] 
-#}
-
-#VaR995_bmm_xts=xts(VaR995_bmm,dax_log$date[1001:6826])
-#VaR99_bmm_xts=xts(VaR99_bmm,dax_log$date[1001:6826])
-#VaR95_bmm_xts=xts(VaR95_bmm,dax_log$date[1001:6826]) ##276 Problem
-#plot(dax_log_xts[1001:6826])  
-#lines(VaR995_bmm_xts,col="red")   
-#lines(VaR99_bmm_xts,col="blue")    
-#lines(VaR95_bmm_xts,col="green")   
-#sum(VaR995_bmm_xts<dax_log_xts[1001:6826]) #  86 Ueberschreitungen
-#sum(VaR99_bmm_xts<dax_log_xts[1001:6826]) #  164 Ueberschreitungen
-#sum(VaR95_bmm_xts<dax_log_xts[1001:6826]) #  666 Ueberschreitungen
-
 ###Problem mit z.B. Funktion "apply.monthly"!!!!!! Die Laenge des Intervalls ist unterschiedlich!! 
 #(Das erste und das letzte sind manchmal zu klein!)
 ## Deshalb werden die Daten aequidistant unterteilt wie folgt:
 
 period.max(dax_log_xts,seq(from=21,to=6804,by=21))  #Monatlich z.B.
 
-###Goodness of Fit Shermann 1957
+###Goodness of Fit Test Shermann 1957
 bmm_monat_st=period.max(dax_log_xts[1:6804],seq(from=21,to=6804,by=21))
 bmm_quartal_st=period.max(dax_log_xts[1:6804],seq(from=63,to=6804,by=63))
 bmm_semester_st=period.max(dax_log_xts[1:6804],seq(from=126,to=6804,by=126))
@@ -1018,6 +962,7 @@ lines(xts(VaR995_hs,dax_log$date[1051:6826]),col="red")
 lines(xts(VaR99_hs,dax_log$date[1051:6826]),col="blue")    
 lines(xts(VaR95_hs,dax_log$date[1051:6826]),col="green")   
 legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
+
 sum(VaR995_hs<dax_log_xts[1051:6826]) #  41 Ueberschreitungen
 sum(VaR99_hs<dax_log_xts[1051:6826]) #  80 Ueberschreitungen
 sum(VaR95_hs<dax_log_xts[1051:6826]) #  323 Ueberschreitungen
@@ -1090,6 +1035,7 @@ lines(xts(VaR995_nv,dax_log$date[1051:6826]),col="red")
 lines(xts(VaR99_nv,dax_log$date[1051:6826]),col="blue")    
 lines(xts(VaR95_nv,dax_log$date[1051:6826]),col="green")   
 legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
+
 sum(VaR995_nv<dax_log_xts[1051:6826]) #  88 Ueberschreitungen
 sum(VaR99_nv<dax_log_xts[1051:6826]) #  144 Ueberschreitungen
 sum(VaR95_nv<dax_log_xts[1051:6826]) #  331 Ueberschreitungen
@@ -1167,6 +1113,7 @@ lines(xts(VaR995_t,dax_log$date[1051:6826]),col="red")
 lines(xts(VaR99_t,dax_log$date[1051:6826]),col="blue")    
 lines(xts(VaR95_t,dax_log$date[1051:6826]),col="green")   
 legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
+
 sum(VaR995_t<dax_log_xts[1051:6826]) #  44 Ueberschreitungen
 sum(VaR99_t<dax_log_xts[1051:6826]) #  86 Ueberschreitungen
 sum(VaR95_t<dax_log_xts[1051:6826]) #  377 Ueberschreitungen
@@ -1251,6 +1198,7 @@ lines(xts(-VaR995_skt1,dax_log$date[1051:6826]),col="red")
 lines(xts(-VaR99_skt1,dax_log$date[1051:6826]),col="blue")    
 lines(xts(-VaR95_skt1,dax_log$date[1051:6826]),col="green")   
 legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
+
 sum(-VaR995_skt1<dax_log_xts[1051:6826]) #  41 Ueberschreitungen
 sum(-VaR99_skt1<dax_log_xts[1051:6826]) #  73 Ueberschreitungen
 sum(-VaR95_skt1<dax_log_xts[1051:6826]) #  342 Ueberschreitungen
@@ -1351,6 +1299,7 @@ lines(VaR995_garchnv_xts,col="red")
 lines(VaR99_garchnv_xts,col="blue")    
 lines(VaR95_garchnv_xts,col="green")   
 legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
+
 sum(VaR995_garchnv_xts<dax_log_xts[1051:6826]) #  59 Ueberschreitungen
 sum(VaR99_garchnv_xts<dax_log_xts[1051:6826]) #  93 Ueberschreitungen
 sum(VaR95_garchnv_xts<dax_log_xts[1051:6826]) #  344 Ueberschreitungen
@@ -1466,6 +1415,7 @@ lines(VaR995_garcht_xts,col="red")
 lines(VaR99_garcht_xts,col="blue")    
 lines(VaR95_garcht_xts,col="green")   
 legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
+
 sum(VaR995_garcht_xts<dax_log_xts[1051:6826]) #  36 Ueberschreitungen
 sum(VaR99_garcht_xts<dax_log_xts[1051:6826]) #  72 Ueberschreitungen
 sum(VaR95_garcht_xts<dax_log_xts[1051:6826]) #  366 Ueberschreitungen
@@ -1528,124 +1478,7 @@ esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES995_garcht_xts,alpha=0.005)#
 esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES99_garcht_xts,alpha=0.01)#0.09269161
 esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES95_garcht_xts,alpha=0.05)#0.0006222125
 
-###Garch mit skt ##dauert 2 Stunden
-
-#VaR95_garchskt_z=numeric(0)
-#VaR99_garchskt_z=numeric(0)
-#VaR995_garchskt_z=numeric(0)
-#ES95_garchskt_z=numeric(0)
-#ES99_garchskt_z=numeric(0)
-#ES995_garchskt_z=numeric(0)
-
-
-#VaR95_garchskt=numeric(0)
-#VaR99_garchskt=numeric(0)
-#VaR995_garchskt=numeric(0)
-#ES95_garchskt=numeric(0)
-#ES99_garchskt=numeric(0)
-#ES995_garchskt=numeric(0)
-
-#integrandgarchskt=function(x){2*x/(paragarchskt[4] + 1/paragarchskt[4]) * dt(x[x >= 0]/paragarchskt[4], df=paragarchskt[3])}
-
-
-#for (i in (1:5776)){         #es gibt (6826-1050) Vorhersagen.  
-#  garchsktfit=garchFit(formula=~arma(0,0)+garch(1,1),data=dax_log_xts[i:(1049+i)],cond.dist ="sstd")
-#  zgarchskt=(dax_log_xts[i:(1049+i)]-garchsktfit@fitted)/garchsktfit@sigma.t
-  ##
-#  sktgarchfit=sstdFit(zgarchskt)
-#  paragarchskt=as.numeric(sktgarchfit$estimate)
-#  VaR95_garchskt_z[i]=qskt(0.95,df=paragarchskt[3],gamma=paragarchskt[4])
-#  VaR99_garchskt_z[i]=qskt(0.99,df=paragarchskt[3],gamma=paragarchskt[4])
-#  VaR995_garchskt_z[i]=qskt(0.995,df=paragarchskt[3],gamma=paragarchskt[4])
-#  ES95_garchskt_z[i]=integrate(integrandgarchskt,lower=qskt(0.95,df=paragarchskt[3],gamma=paragarchskt[4]),upper=Inf)$value*20
-#  ES99_garchskt_z[i]=integrate(integrandgarchskt,lower=qskt(0.99,df=paragarchskt[3],gamma=paragarchskt[4]),upper=Inf)$value*100
-#  ES995_garchskt_z[i]=integrate(integrandgarchskt,lower=qskt(0.995,df=paragarchskt[3],gamma=paragarchskt[4]),upper=Inf)$value*200
-  
-#  VaR995_garchskt[i]=VaR995_garchskt_z[i]*predict(garchsktfit)[1,3]+predict(garchsktfit)[1,1]
-#  VaR99_garchskt[i]=VaR99_garchskt_z[i]*predict(garchsktfit)[1,3]+predict(garchsktfit)[1,1]
-#  VaR95_garchskt[i]=VaR95_garchskt_z[i]*predict(garchsktfit)[1,3]+predict(garchsktfit)[1,1]
-  
-#  ES995_garchskt[i]=ES995_garchskt_z[i]*predict(garchsktfit)[1,3]+predict(garchsktfit)[1,1]
-#  ES99_garchskt[i]=ES99_garchskt_z[i]*predict(garchsktfit)[1,3]+predict(garchsktfit)[1,1]
-#  ES95_garchskt[i]=ES95_garchskt_z[i]*predict(garchsktfit)[1,3]+predict(garchsktfit)[1,1]
-  
-#}  
-#VaR995_garchskt_xts=xts(VaR995_garchskt,dax_log$date[1051:6826])
-#VaR99_garchskt_xts=xts(VaR99_garchskt,dax_log$date[1051:6826])
-#VaR95_garchskt_xts=xts(VaR95_garchskt,dax_log$date[1051:6826])
-
-#ES995_garchskt_xts=xts(ES995_garchskt,dax_log$date[1051:6826])
-#ES99_garchskt_xts=xts(ES99_garchskt,dax_log$date[1051:6826])
-#ES95_garchskt_xts=xts(ES95_garchskt,dax_log$date[1051:6826])
-
-#plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))  
-#lines(VaR995_garchskt_xts,col="red")   
-#lines(VaR99_garchskt_xts,col="blue")    
-#lines(VaR95_garchskt_xts,col="green")   
-#legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
-#sum(VaR995_garchskt_xts<dax_log_xts[1051:6826]) #  10 Ueberschreitungen
-#sum(VaR99_garchskt_xts<dax_log_xts[1051:6826]) #  15 Ueberschreitungen
-#sum(VaR95_garchskt_xts<dax_log_xts[1051:6826]) #  132 Ueberschreitungen
-
-#plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,12))  
-#lines(ES995_garchskt_xts,col="red")   
-#lines(ES99_garchskt_xts,col="blue")    
-#lines(ES95_garchskt_xts,col="green") 
-#legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))#
-
-#nur die ersten 1000 Prognosen
-#plot(dax_log_xts[1051:2050],main="VaR",ylim=c(0,12))  
-#lines(VaR995_garchskt_xts[1:1000],col="red")   
-#lines(VaR99_garchskt_xts[1:1000],col="blue")    
-#lines(VaR95_garchskt_xts[1:1000],col="green")   
-#legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
-
-#plot(dax_log_xts[1051:2050],main="ES",ylim=c(0,13))  
-#lines(ES995_garchskt_xts[1:1000],col="red")   
-#lines(ES99_garchskt_xts[1:1000],col="blue")    
-#lines(ES95_garchskt_xts[1:1000],col="green") 
-#legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
-
-#U.C Test
-#V995=(VaR995_garchskt_xts<dax_log_xts[1051:6826])
-#sum(V995)
-#V99=(VaR99_garchskt_xts<dax_log_xts[1051:6826])
-#sum(V99)
-#V95=(VaR95_garchskt_xts<dax_log_xts[1051:6826])
-#sum(V95)
-
-#uc_test(p=0.005,v=V995) #8.406399
-#uc_test(p=0.01,v=V99)  #26.25402
-#uc_test(p=0.05,v=V95)  #44.06991
-#p-wert
-#1-pchisq(uc_test(p=0.005,v=V995),1)#0.003739026
-#1-pchisq(uc_test(p=0.01,v=V99),1)#0.00
-#1-pchisq(uc_test(p=0.05,v=V95),1)#0.00
-
-##Ind.Test 
-#ind_test(as.vector(V995))#0.04530015
-#ind_test(as.vector(V99)) #4.182913
-#ind_test(as.vector(V95))  #0.2573659
-#1-pchisq(ind_test(as.vector(V995)),1)#0.8314531
-#1-pchisq(ind_test(as.vector(V99)),1)#0.04083347
-#1-pchisq(ind_test(as.vector(V95)),1)#0.6119356
-
-##CC Test
-#1-pchisq(uc_test(p=0.005,v=V995)+ind_test(as.vector(V995)),2)#0.01461291
-#1-pchisq(uc_test(p=0.01,v=V99)+ind_test(as.vector(V99)),2)#0.00
-#1-pchisq(uc_test(p=0.05,v=V95)+ind_test(as.vector(V95)),2)#0.000
-
-
-##ES TEST
-#Z2(p=0.005,ES=ES995_garchskt_xts,L=dax_log_xts[1051:6826],v=V995)#0.4106186
-#Z2(p=0.01,ES=ES99_garchskt_xts,L=dax_log_xts[1051:6826],v=V99)#0.1826519
-#Z2(p=0.05,ES=ES95_garchskt_xts,L=dax_log_xts[1051:6826],v=V95)#0.2890399
-
-#esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES995_garchskt_xts,alpha=0.005)#0.06637217
-#esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES99_garchskt_xts,alpha=0.01)#0.08002596
-#esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES95_garchskt_xts,alpha=0.05)#0.002496068
-
-###GARCH-Skewed t (neu)
+##GARCH-Skewed t 
 model=ugarchspec( variance.model = list(model = "sGARCH", garchOrder = c(1, 1)), mean.model = list(armaOrder = c(0, 0), include.mean = TRUE), distribution.model = "sstd" ) 
 modelroll=ugarchroll(model,data=-dax_log_xts,n.ahead = 1,forecast.length = 5776,window.size = 1050,refit.every = 1,calculate.VaR = TRUE,VaR.alpha = c(0.005,0.01,0.05),keep.coef=TRUE,cluster=NULL)
 #modelfit
@@ -1931,53 +1764,6 @@ VR30=((1-1/30)*acf(dax_log_xts6000)$acf[2]+(1-2/30)*acf(dax_log_xts6000)$acf[3]+
   (1-29/30)*acf(dax_log_xts6000)$acf[30])*2+1
 VR30 #0.8968
 
-###delta_k (S.1164) k=1:30
-#mudach=mean(dax_log_xts6000)
-#delta_k=numeric(0)
-#kj=numeric(0)
-#for (k in (1:30)){
-#  for (i in ((k+1):6000)){
-#   kj[i-k]=(-dax_log$logreturn[i]-mudach)^2*(-dax_log$logreturn[i-k]-mudach)^2
-#   delta_k[k]=sum(kj)*6000*(var(dax_log_xts6000)*5999)^(-2)
-#    }
-#}
-#delta_k
-
-#vv=numeric(0)
-#for (s in (1:6000)){
-#vv[s]=(-dax_log$logreturn[s]-mudach)^2  
-#}
-#sum(vv)
-
-#vartheta10=((1-1/10)^2*delta_k[1]+(1-2/10)^2*delta_k[2]+
-#              (1-3/10)^2*delta_k[3]+(1-4/10)^2*delta_k[4]+
-#              (1-5/10)^2*delta_k[5]+(1-6/10)^2*delta_k[6]+
-#              (1-7/10)^2*delta_k[7]+(1-8/10)^2*delta_k[8]+
-#              (1-9/10)^2*delta_k[9])*4
-#vartheta10
-
-#vartheta30=((1-1/30)^2*delta_k[1]+(1-2/30)^2*delta_k[2]+
-#            (1-3/30)^2*delta_k[3]+(1-4/30)^2*delta_k[4]+
-#            (1-5/30)^2*delta_k[5]+(1-6/30)^2*delta_k[6]+
-#            (1-7/30)^2*delta_k[7]+(1-8/30)^2*delta_k[8]+
-#            (1-9/30)^2*delta_k[9]+(1-10/30)^2*delta_k[10]+
-#            (1-11/30)^2*delta_k[11]+(1-12/30)^2*delta_k[12]+
-#            (1-13/30)^2*delta_k[13]+(1-14/30)^2*delta_k[14]+
-#            (1-15/30)^2*delta_k[15]+(1-16/30)^2*delta_k[16]+
-#            (1-17/30)^2*delta_k[17]+(1-18/30)^2*delta_k[18]+
-#            (1-19/30)^2*delta_k[19]+(1-20/30)^2*delta_k[20]+
-#            (1-21/30)^2*delta_k[21]+(1-22/30)^2*delta_k[22]+
-#            (1-23/30)^2*delta_k[23]+(1-24/30)^2*delta_k[24]+
-#            (1-25/30)^2*delta_k[25]+(1-26/30)^2*delta_k[26]+
-#            (1-27/30)^2*delta_k[27]+(1-28/30)^2*delta_k[28]+
-#            (1-29/30)^2*delta_k[29])*4
-#vartheta30
-
-#psi10=sqrt(10)*(VR10-1)/sqrt(vartheta10)
-#psi10  #-0.06
-
-#psi30=sqrt(30)*(VR30-1)/sqrt(vartheta30)
-#psi30  #-0.0
 
 #Lo-Mackinlay Test (Cheng et al. 2011 S.1164 und Lo, Mackinlay 1988 S.50) 
 Lo.Mac(dax_log_xts6000,kvec=c(10,30))  
