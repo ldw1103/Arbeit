@@ -1,10 +1,17 @@
 # Packages 
 #install.packages("extRemes")
 #install.packages("xts")
+#install.packages("tseries")
+#install.packages("rugarch")
+#install.packages("skewt")
+#install.packages("fGarch")
+#install.packages("forecast")
+#install.packages("evir")
+#install.packages("esback")
+#install.packages("vrtest")
 #install.packages("devtools")
 #devtools::install_github("BayerSe/esreg")
 #devtools::install_github("BayerSe/esback")
-#install.packages("esback")
 library(extRemes) #Extremwerttheorie
 library(xts)      #eXtensible Time Series
 library(tseries)  #Zeitreihe
@@ -12,13 +19,13 @@ library(MASS)
 library(rugarch)  #univariate GARCH
 library(skewt)    #Skewed-t-Verteilung
 library(fGarch)   #GARCH
-library(forecast)
+library(forecast)  #time series forecasting
 library(evir)   #auch Extremwerttheorie
 library(esback)  #ES backtesting
-library(fGarch) #garch
 library(vrtest) #Variance Ratio Test
 
 #Daten Einlesen
+setwd("~/")
 daten=read.csv("DAX.csv") #Quelle: finance.yahoo.com
 daten_omit=daten[!daten$Open=="null",] #Fehlende Werte wegnehmen
 dim(daten_omit)                     #noch 6827 Beobachtungen
@@ -345,14 +352,14 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(VaR995_bmm_xts,col="red")   
 lines(VaR99_bmm_xts,col="blue")    
 lines(VaR95_bmm_xts,col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 
 plot(dax_log_xts[1051:6826],main="ES",,ylim=c(0,10))  
 lines(ES995_bmm_xts,col="red")   
 lines(ES99_bmm_xts,col="blue")    
 lines(ES95_bmm_xts,col="green")  
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 sum(VaR995_bmm_xts<dax_log_xts[1051:6826]) # 63 Ueberschreitungen
 sum(VaR99_bmm_xts<dax_log_xts[1051:6826]) #  121 Ueberschreitungen
@@ -552,14 +559,14 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(VaR995_bmme_xts,col="red")   
 lines(VaR99_bmme_xts,col="blue")    
 lines(VaR95_bmme_xts,col="green")  
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 
 plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,12))  
 lines(ES995_bmme_xts,col="red")   
 lines(ES99_bmme_xts,col="blue")    
 lines(ES95_bmme_xts,col="green")  
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 sum(VaR995_bmme_xts<dax_log_xts[1051:6826]) #  38 Ueberschreitungen
 sum(VaR99_bmme_xts<dax_log_xts[1051:6826]) #  63 Ueberschreitungen
@@ -682,13 +689,13 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(VaR995_pot_xts,col="red")   
 lines(VaR99_pot_xts,col="blue")    
 lines(VaR95_pot_xts,col="green") 
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,10))  
 lines(ES995_pot_xts,col="red")   
 lines(ES99_pot_xts,col="blue")    
 lines(ES95_pot_xts,col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 sum(VaR995_pot_xts<dax_log_xts[1051:6826]) #  42 Ueberschreitungen
 sum(VaR99_pot_xts<dax_log_xts[1051:6826]) #  73 Ueberschreitungen
@@ -853,7 +860,7 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(VaR995_pot_xts_garch,col="red")   
 lines(VaR99_pot_xts_garch,col="blue")    
 lines(VaR95_pot_xts_garch,col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 sum(VaR995_pot_xts_garch<dax_log_xts[1051:6826]) #  26 Ueberschreitungen
 sum(VaR99_pot_xts_garch<dax_log_xts[1051:6826]) #  52 Ueberschreitungen
 sum(VaR95_pot_xts_garch<dax_log_xts[1051:6826]) #  308 Ueberschreitungen
@@ -862,7 +869,7 @@ plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,10))
 lines(ES995_pot_xts_garch,col="red")   
 lines(ES99_pot_xts_garch,col="blue")    
 lines(ES95_pot_xts_garch,col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 
 ###ARMA(0,0) GARCH(1,1)
@@ -907,7 +914,7 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,12))
 lines(VaR995_pot_xts_garch0,col="red")   
 lines(VaR99_pot_xts_garch0,col="blue")    
 lines(VaR95_pot_xts_garch0,col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 sum(VaR995_pot_xts_garch0<dax_log_xts[1051:6826]) #  26 Ueberschreitungen
 sum(VaR99_pot_xts_garch0<dax_log_xts[1051:6826]) #  51 Ueberschreitungen
 sum(VaR95_pot_xts_garch0<dax_log_xts[1051:6826]) #  311 Ueberschreitungen
@@ -916,7 +923,7 @@ plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,13))
 lines(ES995_pot_xts_garch0,col="red")   
 lines(ES99_pot_xts_garch0,col="blue")    
 lines(ES95_pot_xts_garch0,col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 ##mit Punkten
 plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,10),type="p",pch=1)
@@ -939,13 +946,13 @@ plot(dax_log_xts[1051:2050],main="VaR",ylim=c(0,12))
 lines(VaR995_pot_xts_garch0[1:1000],col="red")   
 lines(VaR99_pot_xts_garch0[1:1000],col="blue")    
 lines(VaR95_pot_xts_garch0[1:1000],col="green")   
-legend("topleft",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topleft",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 plot(dax_log_xts[1051:2050],main="ES",ylim=c(0,13))  
 lines(ES995_pot_xts_garch0[1:1000],col="red")   
 lines(ES99_pot_xts_garch0[1:1000],col="blue")    
 lines(ES95_pot_xts_garch0[1:1000],col="green") 
-legend("topleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topleft",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #U.C Test
 V995=(VaR995_pot_xts_garch0<dax_log_xts[1051:6826])
@@ -1010,7 +1017,7 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(xts(VaR995_hs,dax_log$date[1051:6826]),col="red")   
 lines(xts(VaR99_hs,dax_log$date[1051:6826]),col="blue")    
 lines(xts(VaR95_hs,dax_log$date[1051:6826]),col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 sum(VaR995_hs<dax_log_xts[1051:6826]) #  41 Ueberschreitungen
 sum(VaR99_hs<dax_log_xts[1051:6826]) #  80 Ueberschreitungen
 sum(VaR95_hs<dax_log_xts[1051:6826]) #  323 Ueberschreitungen
@@ -1019,7 +1026,7 @@ plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,10))
 lines(xts(ES995_hs,dax_log$date[1051:6826]),col="red")   
 lines(xts(ES99_hs,dax_log$date[1051:6826]),col="blue")    
 lines(xts(ES95_hs,dax_log$date[1051:6826]),col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #U.C Test
 V995=(VaR995_hs<dax_log_xts[1051:6826])
@@ -1082,7 +1089,7 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(xts(VaR995_nv,dax_log$date[1051:6826]),col="red")   
 lines(xts(VaR99_nv,dax_log$date[1051:6826]),col="blue")    
 lines(xts(VaR95_nv,dax_log$date[1051:6826]),col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 sum(VaR995_nv<dax_log_xts[1051:6826]) #  88 Ueberschreitungen
 sum(VaR99_nv<dax_log_xts[1051:6826]) #  144 Ueberschreitungen
 sum(VaR95_nv<dax_log_xts[1051:6826]) #  331 Ueberschreitungen
@@ -1091,7 +1098,7 @@ plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,10))
 lines(xts(ES995_nv,dax_log$date[1051:6826]),col="red")   
 lines(xts(ES99_nv,dax_log$date[1051:6826]),col="blue")    
 lines(xts(ES95_nv,dax_log$date[1051:6826]),col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #U.C Test
 V995=(VaR995_nv<dax_log_xts[1051:6826])
@@ -1159,7 +1166,7 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(xts(VaR995_t,dax_log$date[1051:6826]),col="red")   
 lines(xts(VaR99_t,dax_log$date[1051:6826]),col="blue")    
 lines(xts(VaR95_t,dax_log$date[1051:6826]),col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 sum(VaR995_t<dax_log_xts[1051:6826]) #  44 Ueberschreitungen
 sum(VaR99_t<dax_log_xts[1051:6826]) #  86 Ueberschreitungen
 sum(VaR95_t<dax_log_xts[1051:6826]) #  377 Ueberschreitungen
@@ -1168,7 +1175,7 @@ plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,12))
 lines(xts(ES995_t,dax_log$date[1051:6826]),col="red")   
 lines(xts(ES99_t,dax_log$date[1051:6826]),col="blue")    
 lines(xts(ES95_t,dax_log$date[1051:6826]),col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #U.C Test
 V995=(VaR995_t<dax_log_xts[1051:6826])
@@ -1243,7 +1250,7 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(xts(-VaR995_skt1,dax_log$date[1051:6826]),col="red")   
 lines(xts(-VaR99_skt1,dax_log$date[1051:6826]),col="blue")    
 lines(xts(-VaR95_skt1,dax_log$date[1051:6826]),col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 sum(-VaR995_skt1<dax_log_xts[1051:6826]) #  41 Ueberschreitungen
 sum(-VaR99_skt1<dax_log_xts[1051:6826]) #  73 Ueberschreitungen
 sum(-VaR95_skt1<dax_log_xts[1051:6826]) #  342 Ueberschreitungen
@@ -1252,7 +1259,7 @@ plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,12))
 lines(xts(-ES995_skt1,dax_log$date[1051:6826]),col="red")   
 lines(xts(-ES99_skt1,dax_log$date[1051:6826]),col="blue")    
 lines(xts(-ES95_skt1,dax_log$date[1051:6826]),col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #U.C Test
 V995=(-VaR995_skt1<dax_log_xts[1051:6826])
@@ -1343,7 +1350,7 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(VaR995_garchnv_xts,col="red")   
 lines(VaR99_garchnv_xts,col="blue")    
 lines(VaR95_garchnv_xts,col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 sum(VaR995_garchnv_xts<dax_log_xts[1051:6826]) #  59 Ueberschreitungen
 sum(VaR99_garchnv_xts<dax_log_xts[1051:6826]) #  93 Ueberschreitungen
 sum(VaR95_garchnv_xts<dax_log_xts[1051:6826]) #  344 Ueberschreitungen
@@ -1352,20 +1359,20 @@ plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,12))
 lines(ES995_garchnv_xts,col="red")   
 lines(ES99_garchnv_xts,col="blue")    
 lines(ES95_garchnv_xts,col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #nur die ersten 1000 Prognosen
 plot(dax_log_xts[1051:2050],main="VaR",ylim=c(0,12))  
 lines(VaR995_garchnv_xts[1:1000],col="red")   
 lines(VaR99_garchnv_xts[1:1000],col="blue")    
 lines(VaR95_garchnv_xts[1:1000],col="green")   
-legend("topleft",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topleft",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 plot(dax_log_xts[1051:2050],main="ES",ylim=c(0,13))  
 lines(ES995_garchnv_xts[1:1000],col="red")   
 lines(ES99_garchnv_xts[1:1000],col="blue")    
 lines(ES95_garchnv_xts[1:1000],col="green") 
-legend("topleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topleft",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #U.C Test
 V995=(VaR995_garchnv_xts<dax_log_xts[1051:6826])
@@ -1458,7 +1465,7 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,10))
 lines(VaR995_garcht_xts,col="red")   
 lines(VaR99_garcht_xts,col="blue")    
 lines(VaR95_garcht_xts,col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 sum(VaR995_garcht_xts<dax_log_xts[1051:6826]) #  36 Ueberschreitungen
 sum(VaR99_garcht_xts<dax_log_xts[1051:6826]) #  72 Ueberschreitungen
 sum(VaR95_garcht_xts<dax_log_xts[1051:6826]) #  366 Ueberschreitungen
@@ -1467,20 +1474,20 @@ plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,12))
 lines(ES995_garcht_xts,col="red")   
 lines(ES99_garcht_xts,col="blue")    
 lines(ES95_garcht_xts,col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #nur die ersten 1000 Prognosen
 plot(dax_log_xts[1051:2050],main="VaR",ylim=c(0,12))  
 lines(VaR995_garcht_xts[1:1000],col="red")   
 lines(VaR99_garcht_xts[1:1000],col="blue")    
 lines(VaR95_garcht_xts[1:1000],col="green")   
-legend("topleft",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topleft",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 plot(dax_log_xts[1051:2050],main="ES",ylim=c(0,13))  
 lines(ES995_garcht_xts[1:1000],col="red")   
 lines(ES99_garcht_xts[1:1000],col="blue")    
 lines(ES95_garcht_xts[1:1000],col="green") 
-legend("topleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topleft",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #U.C Test
 V995=(VaR995_garcht_xts<dax_log_xts[1051:6826])
@@ -1575,7 +1582,7 @@ esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES95_garcht_xts,alpha=0.05)#0.
 #lines(VaR995_garchskt_xts,col="red")   
 #lines(VaR99_garchskt_xts,col="blue")    
 #lines(VaR95_garchskt_xts,col="green")   
-#legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+#legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 #sum(VaR995_garchskt_xts<dax_log_xts[1051:6826]) #  10 Ueberschreitungen
 #sum(VaR99_garchskt_xts<dax_log_xts[1051:6826]) #  15 Ueberschreitungen
 #sum(VaR95_garchskt_xts<dax_log_xts[1051:6826]) #  132 Ueberschreitungen
@@ -1584,20 +1591,20 @@ esr_backtest_intercept(-dax_log_xts[1051:6826],e=-ES95_garcht_xts,alpha=0.05)#0.
 #lines(ES995_garchskt_xts,col="red")   
 #lines(ES99_garchskt_xts,col="blue")    
 #lines(ES95_garchskt_xts,col="green") 
-#legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))#
+#legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))#
 
 #nur die ersten 1000 Prognosen
 #plot(dax_log_xts[1051:2050],main="VaR",ylim=c(0,12))  
 #lines(VaR995_garchskt_xts[1:1000],col="red")   
 #lines(VaR99_garchskt_xts[1:1000],col="blue")    
 #lines(VaR95_garchskt_xts[1:1000],col="green")   
-#legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+#legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #plot(dax_log_xts[1051:2050],main="ES",ylim=c(0,13))  
 #lines(ES995_garchskt_xts[1:1000],col="red")   
 #lines(ES99_garchskt_xts[1:1000],col="blue")    
 #lines(ES95_garchskt_xts[1:1000],col="green") 
-#legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+#legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #U.C Test
 #V995=(VaR995_garchskt_xts<dax_log_xts[1051:6826])
@@ -1655,7 +1662,7 @@ plot(dax_log_xts[1051:6826],main="VaR",ylim=c(0,12))
 lines(VaR995_garchsktnew_xts,col="red")   
 lines(VaR99_garchsktnew_xts,col="blue")    
 lines(VaR95_garchsktnew_xts,col="green")   
-legend("topright",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 sum(VaR995_garchsktnew_xts<dax_log_xts[1051:6826]) #  26 Ueberschreitungen
 sum(VaR99_garchsktnew_xts<dax_log_xts[1051:6826]) #  61 Ueberschreitungen
@@ -1666,7 +1673,7 @@ plot(dax_log_xts[1051:2050],main="VaR",ylim=c(0,12))
 lines(VaR995_garchsktnew_xts[1:1000],col="red")   
 lines(VaR99_garchsktnew_xts[1:1000],col="blue")    
 lines(VaR95_garchsktnew_xts[1:1000],col="green")   
-legend("topleft",inset=0.005,c("VaR0.995","VaR0.99","VaR0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topleft",inset=0.005,c("VaR0.005","VaR0.01","VaR0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 ##ES
 ES95_garchsktnew=numeric(0)
@@ -1693,14 +1700,14 @@ plot(dax_log_xts[1051:6826],main="ES",ylim=c(0,15))
 lines(ES995_garchsktnew_xts,col="red")   
 lines(ES99_garchsktnew_xts,col="blue")    
 lines(ES95_garchsktnew_xts,col="green") 
-legend("topright",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topright",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #nur die ersten 1000
 plot(dax_log_xts[1051:2050],main="ES",ylim=c(0,15))  
 lines(ES995_garchsktnew_xts[1:1000],col="red")   
 lines(ES99_garchsktnew_xts[1:1000],col="blue")    
 lines(ES95_garchsktnew_xts[1:1000],col="green") 
-legend("topleft",inset=0.005,c("ES0.995","ES0.99","ES0.95"),col=c("red","blue","green"),lty=c(1,1,1))
+legend("topleft",inset=0.005,c("ES0.005","ES0.01","ES0.05"),col=c("red","blue","green"),lty=c(1,1,1))
 
 #U.C Test
 V995=(VaR995_garchsktnew_xts<dax_log_xts[1051:6826])
