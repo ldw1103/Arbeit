@@ -29,7 +29,8 @@ library(ggplot2) #zeichnen
 library(grid)    #Lokation von ggplots2
 
 #Daten Einlesen
-setwd("~/")
+#setwd("~/")
+load("1.RData")
 daten=read.csv("DAX.csv") #Quelle: finance.yahoo.com
 daten_omit=daten[!daten$Open=="null",] #Fehlende Werte wegnehmen
 dim(daten_omit)                     #noch 6827 Beobachtungen
@@ -79,7 +80,7 @@ plot(fit_bsp)
 fit_bsp$results$par     #Paramter. Location=3.55 (mu), Scale=1.39 (sigma), Shape=0.195 (xi) #xi >0, somit ist es Frechet-Verteilung
 # oder mit evir Package:
 fit_bsp_evir=evir::gev(dax_log_xts,block = 253)  #1 Jahre hat etw. 253 Beobachtungen
-plot(fit_bsp_evir) #gut gefittet
+#plot(fit_bsp_evir) #gut gefittet
 fit_bsp_evir$par.ests   #mu=3.6211049, sigma=1.4509886,xi=0.16
 
 
@@ -257,7 +258,7 @@ fit_monatg_evir$par.ests
 fit_monatg$results$par  #Parameter extrahieren 
 
 
-# VaRs und ESs berechnen. n=21 ist monatlich
+#BM-Methode: VaRs und ESs berechnen. n=21 ist monatlich
 VaR95_bmm=numeric(0)
 VaR99_bmm=numeric(0)
 VaR995_bmm=numeric(0)
@@ -595,7 +596,7 @@ plot(pot_mle)
 #Mle mit evir
 pot_mle_evir=gpd(dax_log_xts,threshold=3.50,method = "ml")
 pot_mle_evir$par.ests
-plot(pot_mle_evir) #diagnostik. gut gepasst
+#plot(pot_mle_evir) #diagnostik. gut gepasst
 
 #Unbedingte VaRs-Schaetzung
 r=riskmeasures(pot_mle_evir,c(0.95,0.99,0.995))
@@ -713,6 +714,7 @@ plot(garchfit3@sigma.t,type="l",main="Standardabweichung der Reihe")
 par(mfrow=c(2,2))
 acf(dax_log_xts,main="ACF der Log-Verluste");acf(abs(dax_log_xts),main="ACF der Abs(Log-Verluste)")  #nicht i.i.d
 acf(zt,main="ACF der Standardisierten Residuen");acf(abs(zt),main="ACF der Abs(Standardisierten Residuen)")     #keinen ARCH-Effekt
+par(mfrow=c(1,1))
 
 Box.test(dax_log_xts,lag=10,type="Ljung-Box") #p=0.00 H0: unabhaengig 
 Box.test(zt,lag=10,type="Ljung-Box")  #p=0.53
@@ -754,8 +756,7 @@ plot(pot_mle_garch)
 #Mle mit evir
 pot_mle_evir_garch=gpd(zt,threshold=2.54,method = "ml")
 pot_mle_evir_garch$par.ests
-#par(mfrow=c(2,2))
-plot(pot_mle_evir_garch) #diagnostik. gut gepasst
+#plot(pot_mle_evir_garch) #diagnostik. gut gepasst
 
 #Unbedingte VaR-Schaetzung
 r=riskmeasures(pot_mle_evir_garch,c(0.95,0.99,0.995))
